@@ -6,9 +6,10 @@ services:
     ports:
       - "8067:8067"
     volumes:
-      - spent-data:/app/data
+      - spent-data:/app/data   # persists SQLite database
+      - ./public:/app/public   # optional: makes static assets editable
+      - ./views:/app/views     # optional: live template editing
     restart: unless-stopped
 
 volumes:
   spent-data:
-  
