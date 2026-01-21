@@ -1,0 +1,7 @@
+<h2>Report</h2>
+<ul>
+<% report.forEach(r => { %>
+    <li><%= r.category %> : €<%= r.amount %> | <%= r.note %> | <%= r.date %></li>
+<% }) %>
+</ul>
+<a href="/dashboard">Back</a>
