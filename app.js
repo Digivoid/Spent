@@ -20,20 +20,20 @@ app.use(session({
 
 // Create default user if none exists
 db.get("SELECT COUNT(*) AS count FROM users", (err, row) => {
-    if(row && row.count === 0){
+    if (row && row.count === 0) {
         db.run("INSERT INTO users (username, password) VALUES (?, ?)", ["admin", "admin123"]);
         console.log("Default user created: admin / admin123");
     }
 });
 
 // Login
-app.get('/', (req, res) => res.render('login'));
+app.get('/', (req, res) => res.render('login', { error: null }));
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     db.get('SELECT * FROM users WHERE username=? AND password=?', [username, password], (err, row) => {
-        if(row) {
+        if (row) {
             req.session.user_id = row.id;
-            if(username === "admin" && password === "admin123") return res.redirect('/change-credentials');
+            if (username === "admin" && password === "admin123") return res.redirect('/change-credentials');
             res.redirect('/dashboard');
         } else {
             res.render('login', { error: 'Invalid login' });
@@ -41,13 +41,13 @@ app.post('/login', (req, res) => {
     });
 });
 
-// Change credentials
+// Change username & password
 app.get('/change-credentials', (req, res) => {
-    if(!req.session.user_id) return res.redirect('/');
+    if (!req.session.user_id) return res.redirect('/');
     res.render('change-credentials');
 });
 app.post('/change-credentials', (req, res) => {
-    if(!req.session.user_id) return res.redirect('/');
+    if (!req.session.user_id) return res.redirect('/');
     const { newUsername, newPassword } = req.body;
     const userId = req.session.user_id;
     db.run('UPDATE users SET username=?, password=? WHERE id=?', [newUsername, newPassword, userId], () => {
@@ -68,9 +68,9 @@ app.post('/reset-password', (req, res) => {
     });
 });
 
-// Dashboard
+// Dashboard with chart data
 app.get('/dashboard', (req, res) => {
-    if(!req.session.user_id) return res.redirect('/');
+    if (!req.session.user_id) return res.redirect('/');
     db.all('SELECT category, SUM(amount) as total FROM expenses WHERE user_id=? GROUP BY category', [req.session.user_id], (err, rows) => {
         res.render('dashboard', { data: rows });
     });
