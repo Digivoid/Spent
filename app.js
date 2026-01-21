@@ -1,13 +1,16 @@
 const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
-const db = require('./db');          // ensures tables are created
+const db = require('./db');
 const reportRoutes = require('./routes/report');
+const path = require('path');
 
 const app = express();
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 app.use(session({
     secret: 'supersecretkey',
@@ -15,53 +18,53 @@ app.use(session({
     saveUninitialized: true
 }));
 
-// Ensure default user exists after tables are ready
+// Create default user if none exists
 db.get("SELECT COUNT(*) AS count FROM users", (err, row) => {
-    if (err) {
-        console.error("DB error:", err);
-        return;
-    }
-    if(row && row.count === 0) {
+    if(row && row.count === 0){
         db.run("INSERT INTO users (username, password) VALUES (?, ?)", ["admin", "admin123"]);
         console.log("Default user created: admin / admin123");
     }
 });
 
-// Login page
+// Login
 app.get('/', (req, res) => res.render('login'));
-
-// Login POST
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     db.get('SELECT * FROM users WHERE username=? AND password=?', [username, password], (err, row) => {
         if(row) {
             req.session.user_id = row.id;
-
-            // Force password change for default user
-            if(username === "admin" && password === "admin123") {
-                return res.redirect('/change-password');
-            }
-
+            if(username === "admin" && password === "admin123") return res.redirect('/change-credentials');
             res.redirect('/dashboard');
         } else {
-            res.send('Invalid login');
+            res.render('login', { error: 'Invalid login' });
         }
     });
 });
 
-// Change password page
-app.get('/change-password', (req, res) => {
+// Change credentials
+app.get('/change-credentials', (req, res) => {
     if(!req.session.user_id) return res.redirect('/');
-    res.render('change-password'); // views/change-password.ejs
+    res.render('change-credentials');
+});
+app.post('/change-credentials', (req, res) => {
+    if(!req.session.user_id) return res.redirect('/');
+    const { newUsername, newPassword } = req.body;
+    const userId = req.session.user_id;
+    db.run('UPDATE users SET username=?, password=? WHERE id=?', [newUsername, newPassword, userId], () => {
+        res.send('Credentials updated! Please <a href="/">login</a> again.');
+    });
 });
 
-app.post('/change-password', (req, res) => {
-    if(!req.session.user_id) return res.redirect('/');
-    const { newPassword } = req.body;
-    const userId = req.session.user_id;
-
-    db.run('UPDATE users SET password=? WHERE id=?', [newPassword, userId], () => {
-        res.send('Password updated! Please <a href="/">login</a> again.');
+// Reset password
+app.get('/reset-password', (req, res) => res.render('reset-password'));
+app.post('/reset-password', (req, res) => {
+    const { username, newPassword } = req.body;
+    db.run('UPDATE users SET password=? WHERE username=?', [newPassword, username], function(err){
+        if(this.changes > 0){
+            res.send('Password reset successfully! <a href="/">Login</a>');
+        } else {
+            res.send('Username not found.');
+        }
     });
 });
 
