@@ -1,6 +1,11 @@
 import sqlite3
+import os
 
-DB = "expenses.db"
+# Make a folder for the database
+DB_DIR = "data"
+os.makedirs(DB_DIR, exist_ok=True)
+
+DB = os.path.join(DB_DIR, "expenses.db")
 
 
 def connect():
