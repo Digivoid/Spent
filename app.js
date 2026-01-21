@@ -15,17 +15,49 @@ app.use(session({
     saveUninitialized: true
 }));
 
-// Login
+// Create default user if none exists
+db.get("SELECT COUNT(*) AS count FROM users", (err, row) => {
+    if(row.count === 0) {
+        db.run("INSERT INTO users (username, password) VALUES (?, ?)", ["admin", "admin123"]);
+        console.log("Default user created: admin / admin123");
+    }
+});
+
+// Login page
 app.get('/', (req, res) => res.render('login'));
+
+// Login POST
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     db.get('SELECT * FROM users WHERE username=? AND password=?', [username, password], (err, row) => {
         if(row) {
             req.session.user_id = row.id;
+
+            // Force password change for default user
+            if(username === "admin" && password === "admin123") {
+                return res.redirect('/change-password');
+            }
+
             res.redirect('/dashboard');
         } else {
             res.send('Invalid login');
         }
+    });
+});
+
+// Change password page
+app.get('/change-password', (req, res) => {
+    if(!req.session.user_id) return res.redirect('/');
+    res.render('change-password'); // create views/change-password.ejs
+});
+
+app.post('/change-password', (req, res) => {
+    if(!req.session.user_id) return res.redirect('/');
+    const { newPassword } = req.body;
+    const userId = req.session.user_id;
+
+    db.run('UPDATE users SET password=? WHERE id=?', [newPassword, userId], () => {
+        res.send('Password updated! Please <a href="/">login</a> again.');
     });
 });
 
@@ -37,7 +69,7 @@ app.get('/dashboard', (req, res) => {
     });
 });
 
-// Report
+// Reports
 app.use('/report', reportRoutes);
 
 app.listen(8067, '0.0.0.0', () => console.log('Server running on port 8067'));
