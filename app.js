@@ -1,7 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
-const db = require('./db');
+const db = require('./db');          // ensures tables are created
 const reportRoutes = require('./routes/report');
 
 const app = express();
@@ -15,9 +15,13 @@ app.use(session({
     saveUninitialized: true
 }));
 
-// Create default user if none exists
+// Ensure default user exists after tables are ready
 db.get("SELECT COUNT(*) AS count FROM users", (err, row) => {
-    if(row.count === 0) {
+    if (err) {
+        console.error("DB error:", err);
+        return;
+    }
+    if(row && row.count === 0) {
         db.run("INSERT INTO users (username, password) VALUES (?, ?)", ["admin", "admin123"]);
         console.log("Default user created: admin / admin123");
     }
@@ -48,7 +52,7 @@ app.post('/login', (req, res) => {
 // Change password page
 app.get('/change-password', (req, res) => {
     if(!req.session.user_id) return res.redirect('/');
-    res.render('change-password'); // create views/change-password.ejs
+    res.render('change-password'); // views/change-password.ejs
 });
 
 app.post('/change-password', (req, res) => {
