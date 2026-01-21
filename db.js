@@ -19,7 +19,8 @@ db.serialize(() => {
       category TEXT,
       subcategory TEXT,
       note TEXT,
-      date TEXT
+      date TEXT,
+      color TEXT
   )`);
 });
 
