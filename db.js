@@ -1,10 +1,9 @@
 const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 
-// Make sure folder exists
-if (!fs.existsSync('./data')) fs.mkdirSync('./data');
+if(!fs.existsSync('./data')) fs.mkdirSync('./data');
 
-const db = new sqlite3.Database('./data/expenses.db'); // <- use ./data folder
+const db = new sqlite3.Database('./data/expenses.db');
 
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS users(
@@ -12,7 +11,6 @@ db.serialize(() => {
         username TEXT UNIQUE,
         password TEXT
     )`);
-
     db.run(`CREATE TABLE IF NOT EXISTS expenses(
         id INTEGER PRIMARY KEY,
         user_id INTEGER,
