@@ -26,6 +26,31 @@
     </div>
   </div>
 
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-md-6 mb-3">
+      <div class="card text-white bg-primary p-3">
+        <h5>Total Expenses</h5>
+        <h3>€<%= totalExpenses || 0 %></h3>
+      </div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <div class="card text-dark bg-light p-3">
+        <h5>Recent Expenses</h5>
+        <ul class="list-group list-group-flush">
+          <% recentExpenses.forEach(e => { %>
+            <li class="list-group-item">
+              €<%= e.amount %> - <%= e.category %> <%= e.subcategory ? '(' + e.subcategory + ')' : '' %>
+            </li>
+          <% }) %>
+          <% if(recentExpenses.length === 0){ %>
+            <li class="list-group-item">No expenses yet</li>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <!-- Chart -->
   <div class="card p-3 mb-4">
     <canvas id="categoryChart" style="max-width:600px;"></canvas>
@@ -33,7 +58,7 @@
 
   <!-- Expense Table -->
   <div class="card p-3">
-    <h4>Expenses</h4>
+    <h4>All Expenses</h4>
     <table class="table table-striped">
       <thead>
         <tr>
