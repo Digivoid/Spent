@@ -1,20 +1,10 @@
-from werkzeug.security import generate_password_hash, check_password_hash
-from db import connect
+from flask import session, redirect, url_for
+from functools import wraps
 
-
-def create_user(username, password):
-    db = connect()
-    db.execute(
-        "INSERT OR IGNORE INTO users VALUES(NULL,?,?)",
-        (username, generate_password_hash(password))
-    )
-    db.commit()
-
-
-def check_login(username, password):
-    db = connect()
-    u = db.execute(
-        "SELECT password FROM users WHERE username=?",
-        (username,)
-    ).fetchone()
-    return u and check_password_hash(u[0], password)
+def login_required(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return wrapped
