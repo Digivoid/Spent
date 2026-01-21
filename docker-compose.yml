@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  spend:
+    build: .
+    container_name: spend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./expenses.db:/app/expenses.db
+      - ./static/charts:/app/static/charts
+    restart: unless-stopped
