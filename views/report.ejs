@@ -1,7 +1,35 @@
-<h2>Report</h2>
-<ul>
-<% report.forEach(r => { %>
-    <li><%= r.category %> : €<%= r.amount %> | <%= r.note %> | <%= r.date %></li>
-<% }) %>
-</ul>
-<a href="/dashboard">Back</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Report - Spent Tracker</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Expenses Report</h2>
+    <a href="/dashboard" class="btn btn-secondary">Back</a>
+  </div>
+
+  <table class="table table-striped">
+    <thead>
+      <tr><th>Amount (€)</th><th>Category</th><th>Note</th><th>Date</th></tr>
+    </thead>
+    <tbody>
+      <% report.forEach(r => { %>
+        <tr>
+          <td><%= r.amount %></td>
+          <td><%= r.category %></td>
+          <td><%= r.note %></td>
+          <td><%= r.date %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>
