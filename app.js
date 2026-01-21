@@ -9,6 +9,7 @@ const reportRoutes = require('./routes/report');
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(express.static('public'));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -27,13 +28,14 @@ db.get("SELECT COUNT(*) AS count FROM users", (err, row) => {
     }
 });
 
-// Routes
+// Login routes
 app.get('/', (req,res)=>res.render('login',{ error:null }));
 app.post('/login',(req,res)=>{
     const { username, password } = req.body;
     db.get("SELECT * FROM users WHERE username=? AND password=?", [username,password], (err,row)=>{
         if(row){
             req.session.user_id = row.id;
+            req.session.username = row.username;
             if(username==="admin" && password==="admin123") return res.redirect('/change-credentials');
             res.redirect('/dashboard');
         }else res.render('login',{ error:"Invalid login" });
@@ -63,18 +65,12 @@ app.post('/reset-password',(req,res)=>{
     });
 });
 
-// Dashboard with totals + recent expenses + color-coded categories
+// Dashboard
 app.get('/dashboard',(req,res)=>{
     if(!req.session.user_id) return res.redirect('/');
     db.all("SELECT id, category, subcategory, note, date, amount, color FROM expenses WHERE user_id=?",[req.session.user_id], (err, rows)=>{
-
-        // Compute total expenses
         const totalExpenses = rows.reduce((sum,e)=>sum+e.amount,0);
-
-        // Last 5 recent expenses
         const recentExpenses = rows.sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
-
-        // Aggregate for chart by category+subcategory
         const chartData = [];
         const map = {};
         rows.forEach(e=>{
@@ -84,15 +80,12 @@ app.get('/dashboard',(req,res)=>{
             } else map[key].total += e.amount;
         });
         for(let k in map) chartData.push(map[k]);
-
-        res.render('dashboard',{ data: chartData, totalExpenses, recentExpenses });
+        res.render('dashboard',{ data: chartData, totalExpenses, recentExpenses, username:req.session.username });
     });
 });
 
-// Expenses
+// Expenses & Reports
 app.use('/expenses',expenseRoutes);
-
-// Reports
 app.use('/report',reportRoutes);
 
 app.listen(8067,'0.0.0.0',()=>console.log("Server running on port 8067"));
