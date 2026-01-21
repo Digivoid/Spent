@@ -6,7 +6,7 @@ services:
     ports:
       - "8067:8067"
     volumes:
-      - spent-data:/app/expenses.db
+      - spent-data:/app/data
     restart: unless-stopped
 
 volumes:
