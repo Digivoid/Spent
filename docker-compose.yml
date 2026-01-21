@@ -1,13 +1,8 @@
-version: "3.9"
+version: "3.8"
 
 services:
-  spent:
-    container_name: spent
+  web:
     build: .
     ports:
       - "8067:8067"
-    volumes:
-      - ./data:/app/data # DB persists automatically
-      - ./templates:/app/templates
-      - ./static/charts:/app/static/charts
     restart: unless-stopped
