@@ -63,12 +63,30 @@ app.post('/reset-password',(req,res)=>{
     });
 });
 
-// Dashboard
+// Dashboard with totals + recent expenses + color-coded categories
 app.get('/dashboard',(req,res)=>{
     if(!req.session.user_id) return res.redirect('/');
-    db.all("SELECT category,SUM(amount) as total FROM expenses WHERE user_id=? GROUP BY category",
-        [req.session.user_id],
-        (err,rows)=>res.render('dashboard',{ data: rows }));
+    db.all("SELECT id, category, subcategory, note, date, amount, color FROM expenses WHERE user_id=?",[req.session.user_id], (err, rows)=>{
+
+        // Compute total expenses
+        const totalExpenses = rows.reduce((sum,e)=>sum+e.amount,0);
+
+        // Last 5 recent expenses
+        const recentExpenses = rows.sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+
+        // Aggregate for chart by category+subcategory
+        const chartData = [];
+        const map = {};
+        rows.forEach(e=>{
+            const key = e.category + (e.subcategory ? ' - '+e.subcategory : '');
+            if(!map[key]){
+                map[key] = { id:e.id, category:e.category, subcategory:e.subcategory, total:e.amount, color:e.color };
+            } else map[key].total += e.amount;
+        });
+        for(let k in map) chartData.push(map[k]);
+
+        res.render('dashboard',{ data: chartData, totalExpenses, recentExpenses });
+    });
 });
 
 // Expenses
