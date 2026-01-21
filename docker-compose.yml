@@ -5,4 +5,9 @@ services:
     container_name: spent
     ports:
       - "8067:8067"
+    volumes:
+      - spent-data:/app/expenses.db
     restart: unless-stopped
+
+volumes:
+  spent-data:
