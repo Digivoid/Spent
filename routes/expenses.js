@@ -2,46 +2,75 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-const categoryColors = ['#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8', '#6f42c1', '#fd7e14', '#e83e8c'];
+// GET add expense page
+router.get('/add', (req, res) => {
+    db.all("SELECT DISTINCT category FROM expenses WHERE user_id=? ORDER BY category", 
+        [req.session.user_id], (err, categories) => {
+        if (!categories) categories = [];
+        res.render('add-expense', { categories, username: req.session.username });
+    });
+});
 
-router.get('/edit/:id', (req, res) => {
-    db.get("SELECT * FROM expenses WHERE id=? AND user_id=?", 
-        [req.params.id, req.session.user_id], (err, expense) => {
-        if (expense) {
-            res.render('edit-expense', { expense });
-        } else {
+// POST add expense
+router.post('/add', (req, res) => {
+    const { category, subcategory, note, date, time, amount, color } = req.body;
+    
+    if (!category || !amount || !date) {
+        return res.send('❌ Category, amount, and date are required! <a href="/expenses/add">Back</a>');
+    }
+    
+    db.run(
+        "INSERT INTO expenses(user_id, category, subcategory, note, date, time, amount, color) VALUES(?,?,?,?,?,?,?,?)",
+        [req.session.user_id, category, subcategory || '', note || '', date, time || '', parseFloat(amount), color || '#007bff'],
+        (err) => {
+            if (err) {
+                console.error('Error adding expense:', err);
+                return res.send('❌ Error adding expense! <a href="/expenses/add">Back</a>');
+            }
+            console.log(`✅ Expense added: ${category} - €${amount}`);
             res.redirect('/dashboard');
+        }
+    );
+});
+
+// GET add category
+router.get('/add-category', (req, res) => {
+    res.render('add-category', { username: req.session.username });
+});
+
+// POST add category (just returns to add-expense with new category)
+router.post('/add-category', (req, res) => {
+    const { newCategory } = req.body;
+    
+    if (!newCategory) {
+        return res.send('❌ Category name required! <a href="/expenses/add-category">Back</a>');
+    }
+    
+    // Categories are stored by adding an expense, so just redirect
+    res.redirect('/expenses/add');
+});
+
+// DELETE expense
+router.delete('/:id', (req, res) => {
+    const { id } = req.params;
+    
+    db.run("DELETE FROM expenses WHERE id=? AND user_id=?", [id, req.session.user_id], function() {
+        if (this.changes > 0) {
+            console.log(`✅ Expense ${id} deleted`);
+            res.json({ success: true });
+        } else {
+            res.status(403).json({ success: false, error: 'Unauthorized' });
         }
     });
 });
 
-router.post('/add', (req, res) => {
-    const { amount, category, subcategory, note, date, time } = req.body;
-    const color = categoryColors[Math.floor(Math.random() * categoryColors.length)];
-    db.run("INSERT INTO expenses(user_id, amount, category, subcategory, note, date, time, color) VALUES(?,?,?,?,?,?,?,?)",
-        [req.session.user_id, parseFloat(amount), category, subcategory || '', note || '', date, time || '', color],
-        () => res.redirect('/dashboard')
-    );
-});
-
-router.post('/edit/:id', (req, res) => {
-    const { amount, category, subcategory, note, date, time } = req.body;
-    db.run("UPDATE expenses SET amount=?, category=?, subcategory=?, note=?, date=?, time=? WHERE id=? AND user_id=?",
-        [parseFloat(amount), category, subcategory || '', note || '', date, time || '', req.params.id, req.session.user_id],
-        () => res.redirect('/dashboard')
-    );
-});
-
-router.get('/delete/:id', (req, res) => {
-    db.run("DELETE FROM expenses WHERE id=? AND user_id=?", [req.params.id, req.session.user_id], () => res.redirect('/dashboard'));
-});
-
-router.post('/add-category', (req, res) => {
-    const { category, color } = req.body;
-    db.run("INSERT INTO expenses(user_id, category, amount, color, date) VALUES(?,?,?,?,?)",
-        [req.session.user_id, category, 0, color, new Date().toISOString().split('T')[0]],
-        () => res.json({ success: true })
-    );
+// GET all expenses (for dashboard refresh)
+router.get('/list', (req, res) => {
+    db.all("SELECT id, category, subcategory, note, date, time, amount, color FROM expenses WHERE user_id=? ORDER BY date DESC", 
+        [req.session.user_id], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows || []);
+    });
 });
 
 module.exports = router;
