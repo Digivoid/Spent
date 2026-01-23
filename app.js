@@ -112,7 +112,7 @@ app.get('/dashboard', requireAuth, (req, res) => {
         });
         
         res.render('dashboard', { 
-             Object.values(chartData), 
+            chartdata: Object.values(chartData), 
             totalExpenses, 
             recentExpenses, 
             username: req.session.username 
