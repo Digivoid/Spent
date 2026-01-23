@@ -1,15 +1,28 @@
 version: "3.9"
 
 services:
-  spent:
-    image: spent:local
-    build: .
-    container_name: spent
+  spent-tracker:
+    image: spent-tracker:latest
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: spent-tracker
     ports:
       - "8067:8067"
+    environment:
+      - NODE_ENV=production
+      - SESSION_SECRET=${SESSION_SECRET}
     volumes:
-      - spent-data:/app/data   # SQLite persistence ONLY
+      - spent-/app/data
+      - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8067"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
-  spent-data:
+  spent-
+    driver: local
