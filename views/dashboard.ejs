@@ -30,6 +30,10 @@
                     <span class="nav-icon">➕</span>
                     <span>Add Expense</span>
                 </a>
+                <a href="/graph" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span>Analytics</span>
+                </a>
             </div>
 
             <div class="sidebar-footer">
@@ -55,21 +59,15 @@
             <!-- Stats Cards -->
             <section class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">Total Spent</div>
-                    <div class="stat-value">€<%= totalExpenses %></div>
-                    <div class="stat-change positive">All time</div>
+                    <div class="stat-label">Last Month</div>
+                    <div class="stat-value">€<%= lastMonthTotal %></div>
+                    <div class="stat-change">Previous month</div>
                 </div>
 
                 <div class="stat-card">
                     <div class="stat-label">This Month</div>
                     <div class="stat-value">€<%= thisMonthTotal %></div>
-                    <div class="stat-change">Current month</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-label">Biggest Expense</div>
-                    <div class="stat-value">€<%= biggestExpense %></div>
-                    <div class="stat-change">Largest transaction</div>
+                    <div class="stat-change positive">Current month</div>
                 </div>
 
                 <div class="stat-card">
@@ -77,41 +75,16 @@
                     <div class="stat-value" style="font-size: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= topCategory %></div>
                     <div class="stat-change">Most used</div>
                 </div>
-            </section>
 
-            <!-- Quick Actions Grid -->
-            <section class="dashboard-grid">
-                <!-- Analytics Card -->
-                <a href="/graph" class="card chart-card" style="text-decoration: none; cursor: pointer; transition: var(--transition);">
-                    <div class="card-header">
-                        <h3>Analytics</h3>
-                    </div>
-                    <div class="card-body">
-                        <div style="text-align: center; padding: 40px 20px;">
-                            <div style="font-size: 56px; margin-bottom: 16px; opacity: 0.6;">📈</div>
-                            <p style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Spending Breakdown</p>
-                            <p style="font-size: 13px; color: var(--text-secondary);">View charts and insights</p>
-                        </div>
-                    </div>
-                </a>
-
-                <!-- Reports Card -->
-                <a href="/report" class="card chart-card" style="text-decoration: none; cursor: pointer; transition: var(--transition);">
-                    <div class="card-header">
-                        <h3>Reports</h3>
-                    </div>
-                    <div class="card-body">
-                        <div style="text-align: center; padding: 40px 20px;">
-                            <div style="font-size: 56px; margin-bottom: 16px; opacity: 0.6;">📄</div>
-                            <p style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Expense Report</p>
-                            <p style="font-size: 13px; color: var(--text-secondary);">View detailed table</p>
-                        </div>
-                    </div>
-                </a>
+                <div class="stat-card">
+                    <div class="stat-label">Total Entries</div>
+                    <div class="stat-value"><%= totalEntries %></div>
+                    <div class="stat-change">All expenses</div>
+                </div>
             </section>
 
             <!-- Recent Expenses -->
-            <section style="padding: 0 var(--space-2xl) var(--space-2xl);">
+            <section style="padding: var(--space-2xl);">
                 <div class="card">
                     <div class="card-header">
                         <h3>Recent Expenses</h3>
