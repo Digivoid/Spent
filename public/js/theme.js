@@ -1,4 +1,4 @@
-// Dark/Light Theme Toggle
+// Dark/Light Theme Toggle - FIXED
 document.addEventListener('DOMContentLoaded', () => {
     const themeToggle = document.getElementById('themeToggle');
     const htmlElement = document.documentElement;
@@ -9,15 +9,22 @@ document.addEventListener('DOMContentLoaded', () => {
     updateThemeIcon(savedTheme);
 
     // Toggle theme
-    themeToggle.addEventListener('click', () => {
-        const currentTheme = htmlElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        htmlElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        updateThemeIcon(newTheme);
-    });
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+    }
 
     function updateThemeIcon(theme) {
-        themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+        if (themeToggle) {
+            const icon = themeToggle.querySelector('.theme-icon');
+            if (icon) {
+                icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+            }
+        }
     }
 });
