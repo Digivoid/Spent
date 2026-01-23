@@ -1,14 +1,14 @@
 version: "3.9"
+
 services:
   spent:
+    image: spent:local
     build: .
     container_name: spent
     ports:
       - "8067:8067"
     volumes:
-      - spent-data:/app/data   # persists SQLite database
-      - ./public:/app/public   # optional: makes static assets editable
-      - ./views:/app/views     # optional: live template editing
+      - spent-data:/app/data   # SQLite persistence ONLY
     restart: unless-stopped
 
 volumes:
