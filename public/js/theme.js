@@ -1,30 +1,33 @@
-// Dark/Light Theme Toggle - FIXED
-document.addEventListener('DOMContentLoaded', () => {
-    const themeToggle = document.getElementById('themeToggle');
-    const htmlElement = document.documentElement;
-
-    // Check for saved theme preference or default to 'dark'
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    htmlElement.setAttribute('data-theme', savedTheme);
-    updateThemeIcon(savedTheme);
-
-    // Toggle theme
-    if (themeToggle) {
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = htmlElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            htmlElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeIcon(newTheme);
-        });
-    }
-
-    function updateThemeIcon(theme) {
+// Dark/Light Theme Toggle
+(function() {
+    'use strict';
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        
+        // Get saved theme or default to dark
+        const currentTheme = localStorage.getItem('theme') || 'dark';
+        body.setAttribute('data-theme', currentTheme);
+        updateIcon(currentTheme);
+        
+        // Toggle on click
         if (themeToggle) {
-            const icon = themeToggle.querySelector('.theme-icon');
+            themeToggle.addEventListener('click', function() {
+                const theme = body.getAttribute('data-theme');
+                const newTheme = theme === 'dark' ? 'light' : 'dark';
+                
+                body.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateIcon(newTheme);
+            });
+        }
+        
+        function updateIcon(theme) {
+            const icon = document.querySelector('.theme-icon');
             if (icon) {
                 icon.textContent = theme === 'dark' ? '☀️' : '🌙';
             }
         }
-    }
-});
+    });
+})();
