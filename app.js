@@ -159,8 +159,8 @@ app.get('/dashboard', requireAuth, (req, res) => {
         
         if (!rows) rows = [];
         
-        const totalExpenses = rows.reduce((sum, e) => sum + (e.amount || 0), 0);
         const recentExpenses = rows.slice(0, 5);
+        const totalEntries = rows.length;
         
         // This month spending
         const now = new Date();
@@ -170,8 +170,13 @@ app.get('/dashboard', requireAuth, (req, res) => {
         });
         const thisMonthTotal = thisMonthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
         
-        // Biggest expense
-        const biggestExpense = rows.length > 0 ? Math.max(...rows.map(e => e.amount || 0)) : 0;
+        // Last month spending
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthExpenses = rows.filter(e => {
+            const expDate = new Date(e.date);
+            return expDate.getMonth() === lastMonth.getMonth() && expDate.getFullYear() === lastMonth.getFullYear();
+        });
+        const lastMonthTotal = lastMonthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
         
         // Top category
         const categoryTotals = {};
@@ -191,35 +196,11 @@ app.get('/dashboard', requireAuth, (req, res) => {
             }
         }
         
-        const chartData = {};
-        rows.forEach(e => {
-            const key = e.category + (e.subcategory ? ' - ' + e.subcategory : '');
-            if (!chartData[key]) {
-                chartData[key] = { 
-                    id: e.id,
-                    total: 0, 
-                    color: e.color || '#00A9FF', 
-                    category: e.category, 
-                    subcategory: e.subcategory || '',
-                    note: e.note || '',
-                    date: e.date,
-                    time: e.time || ''
-                };
-            }
-            chartData[key].total += e.amount || 0;
-        });
-        
-        const data = [];
-        for (let key in chartData) {
-            data.push(chartData[key]);
-        }
-        
         res.render('dashboard', { 
-             data, 
-            totalExpenses: parseFloat(totalExpenses || 0).toFixed(2),
+            lastMonthTotal: parseFloat(lastMonthTotal || 0).toFixed(2),
             thisMonthTotal: parseFloat(thisMonthTotal || 0).toFixed(2),
-            biggestExpense: parseFloat(biggestExpense || 0).toFixed(2),
             topCategory: topCategory,
+            totalEntries: totalEntries,
             recentExpenses, 
             username: req.session.username 
         });
