@@ -1,19 +1,17 @@
-version: "3.9"
-
+version: '3.8'
 services:
   spent-tracker:
     build:
       context: .
       dockerfile: Dockerfile
+    image: ghcr.io/digivoid/spent-tracker:latest
     container_name: spent-tracker
     ports:
       - "8067:8067"
     environment:
       - NODE_ENV=production
-      - SESSION_SECRET=${SESSION_SECRET}
     volumes:
-      - .//app/data
-      - /etc/localtime:/etc/localtime:ro
+      - spent_db:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8067 || exit 1"]
@@ -21,3 +19,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.spent.rule=Host(`spent.yourdomain.com`)"
+
+volumes:
+  spent_db:
