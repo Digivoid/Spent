@@ -207,7 +207,7 @@ app.get('/dashboard', requireAuth, (req, res) => {
     });
 });
 
-// Graph/Analytics page
+// Graph/Analytics page (merged with reports)
 app.get('/graph', requireAuth, (req, res) => {
     db.all("SELECT id, category, subcategory, note, date, time, amount, color FROM expenses WHERE user_id=? ORDER BY date DESC", 
         [req.session.user_id], (err, rows) => {
@@ -245,8 +245,9 @@ app.get('/graph', requireAuth, (req, res) => {
         data.sort((a, b) => b.total - a.total);
         
         res.render('graph', { 
-             data,
+            data: data,
             total: total,
+            expenses: rows,
             username: req.session.username 
         });
     });
