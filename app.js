@@ -43,7 +43,7 @@ db.all("PRAGMA table_info(expenses)", (err, rows) => {
         const hasTime = rows.some(row => row.name === 'time');
         if (!hasTime) {
             db.run("ALTER TABLE expenses ADD COLUMN time TEXT", (err) => {
-                if (!err) console.log("✅ Added time column to expenses table");
+                if (!err) console.log("Added time column to expenses table");
             });
         }
     }
@@ -55,7 +55,7 @@ bcrypt.hash(defaultPassword, 10, (err, hash) => {
     db.get("SELECT COUNT(*) AS count FROM users", (err, row) => {
         if (row && row.count === 0) {
             db.run("INSERT INTO users(username, password) VALUES(?,?)", ["admin", hash]);
-            console.log("✅ Default admin created: admin/admin123");
+            console.log("Default admin created: admin/admin123");
         }
     });
 });
@@ -73,7 +73,7 @@ app.get('/change-credentials', requireAuth, (req, res) => res.render('change-cre
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
-    console.log(`🔍 Login attempt: username="${username}"`);
+    console.log(`Login attempt: username="${username}"`);
     
     db.get("SELECT * FROM users WHERE username=?", [username], async (err, row) => {
         if (row) {
@@ -82,18 +82,18 @@ app.post('/login', (req, res) => {
             if (match) {
                 req.session.user_id = row.id;
                 req.session.username = row.username;
-                console.log(`✅ Login successful for ${username}`);
+                console.log(`Login successful for ${username}`);
                 
                 if (username === "admin" && password === "admin123") {
                     return res.redirect('/change-credentials');
                 }
                 res.redirect('/dashboard');
             } else {
-                console.log(`❌ Invalid password for ${username}`);
+                console.log(`Invalid password for ${username}`);
                 res.render('login', { error: "Invalid credentials" });
             }
         } else {
-            console.log(`❌ User ${username} not found`);
+            console.log(`User ${username} not found`);
             res.render('login', { error: "Invalid credentials" });
         }
     });
@@ -103,15 +103,15 @@ app.post('/change-credentials', requireAuth, (req, res) => {
     const { newUsername, newPassword } = req.body;
     
     if (!newUsername || !newPassword) {
-        return res.send('❌ Username and password are required! <a href="/change-credentials">Back</a>');
+        return res.send('Error: Username and password are required! <a href="/change-credentials">Back</a>');
     }
     
     bcrypt.hash(newPassword, 10, (err, hash) => {
         db.run("UPDATE users SET username=?, password=? WHERE id=?", 
             [newUsername, hash, req.session.user_id], 
             () => {
-                console.log(`✅ Credentials updated for user ${req.session.user_id}`);
-                res.send('✅ Credentials updated! <a href="/">Login</a>');
+                console.log(`Credentials updated for user ${req.session.user_id}`);
+                res.send('Credentials updated! <a href="/">Login</a>');
             }
         );
     });
@@ -121,29 +121,40 @@ app.post('/reset-password', (req, res) => {
     const { username, newPassword } = req.body;
     
     if (!username || !newPassword) {
-        return res.send('❌ Username and password are required! <a href="/reset-password">Back</a>');
+        return res.send('Error: Username and password are required! <a href="/reset-password">Back</a>');
     }
     
     bcrypt.hash(newPassword, 10, (err, hash) => {
         db.run("UPDATE users SET password=? WHERE username=?", [hash, username], function() {
             if (this.changes > 0) {
-                console.log(`✅ Password reset for user ${username}`);
-                res.send('✅ Password reset! <a href="/">Login</a>');
+                console.log(`Password reset for user ${username}`);
+                res.send('Password reset! <a href="/">Login</a>');
             } else {
-                console.log(`❌ User ${username} not found for reset`);
-                res.send('❌ Username not found. <a href="/reset-password">Back</a>');
+                console.log(`User ${username} not found for reset`);
+                res.send('Error: Username not found. <a href="/reset-password">Back</a>');
             }
         });
     });
 });
 
+// Logout route
+app.get('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.send('Error logging out');
+        }
+        res.redirect('/');
+    });
+});
+
+// Dashboard
 app.get('/dashboard', requireAuth, (req, res) => {
     db.all("SELECT id, category, subcategory, note, date, time, amount, color FROM expenses WHERE user_id=? ORDER BY date DESC", 
         [req.session.user_id], (err, rows) => {
         
         if (err) {
             console.error('Dashboard error:', err);
-            return res.send('❌ Database error');
+            return res.send('Database error');
         }
         
         if (!rows) rows = [];
@@ -158,7 +169,7 @@ app.get('/dashboard', requireAuth, (req, res) => {
                 chartData[key] = { 
                     id: e.id,
                     total: 0, 
-                    color: e.color || '#007bff', 
+                    color: e.color || '#00A9FF', 
                     category: e.category, 
                     subcategory: e.subcategory || '',
                     note: e.note || '',
@@ -169,7 +180,6 @@ app.get('/dashboard', requireAuth, (req, res) => {
             chartData[key].total += e.amount || 0;
         });
         
-        // Convert to array
         const data = [];
         for (let key in chartData) {
             data.push(chartData[key]);
@@ -177,8 +187,49 @@ app.get('/dashboard', requireAuth, (req, res) => {
         
         res.render('dashboard', { 
              data, 
-            totalExpenses: totalExpenses.toFixed(2), 
+            totalExpenses: parseFloat(totalExpenses || 0).toFixed(2), 
             recentExpenses, 
+            username: req.session.username 
+        });
+    });
+});
+
+// All Expenses
+app.get('/all-expenses', requireAuth, (req, res) => {
+    db.all("SELECT id, category, subcategory, note, date, time, amount, color FROM expenses WHERE user_id=? ORDER BY date DESC", 
+        [req.session.user_id], (err, rows) => {
+        
+        if (err) {
+            console.error('Error:', err);
+            return res.send('Database error');
+        }
+        
+        res.render('all-expenses', { 
+            expenses: rows || [],
+            username: req.session.username 
+        });
+    });
+});
+
+// Category View
+app.get('/expenses/category/:category', requireAuth, (req, res) => {
+    const { category } = req.params;
+    
+    db.all("SELECT id, category, subcategory, note, date, time, amount, color FROM expenses WHERE user_id=? AND category=? ORDER BY date DESC", 
+        [req.session.user_id, category], (err, rows) => {
+        
+        if (err) {
+            console.error('Error:', err);
+            return res.send('Database error');
+        }
+        
+        const expenses = rows || [];
+        const total = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+        
+        res.render('category-view', { 
+            category: decodeURIComponent(category),
+            expenses: expenses,
+            total: total,
             username: req.session.username 
         });
     });
@@ -188,4 +239,4 @@ app.use('/expenses', requireAuth, expenseRoutes);
 app.use('/report', requireAuth, reportRoutes);
 
 const PORT = process.env.PORT || 8067;
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
