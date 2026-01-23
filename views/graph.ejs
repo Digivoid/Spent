@@ -31,6 +31,10 @@
                     <span class="nav-icon">➕</span>
                     <span>Add Expense</span>
                 </a>
+                <a href="/graph" class="nav-item active">
+                    <span class="nav-icon">📈</span>
+                    <span>Analytics</span>
+                </a>
             </div>
 
             <div class="sidebar-footer">
@@ -49,56 +53,115 @@
             <header class="page-header">
                 <div class="header-content">
                     <h2>Analytics</h2>
-                    <p class="header-subtitle">Visual breakdown of your expenses</p>
+                    <p class="header-subtitle">Visual breakdown and detailed reports</p>
                 </div>
             </header>
 
-            <!-- Chart Section -->
-            <section style="padding: var(--space-2xl);">
-                <div class="card chart-card" style="max-width: 800px; margin: 0 auto;">
-                    <div class="card-header">
-                        <h3>Spending by Category</h3>
-                        <span style="color: var(--text-secondary); font-size: 14px;">Total: €<%= total.toFixed(2) %></span>
-                    </div>
-                    <div class="card-body" style="padding: var(--space-2xl);">
-                        <% if (data && data.length > 0) { %>
-                            <canvas id="categoryChart" style="max-height: 400px;"></canvas>
-                        <% } else { %>
-                            <div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
-                                <div style="font-size: 64px; margin-bottom: 24px; opacity: 0.3;">📊</div>
-                                <p style="font-size: 20px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;">No data to visualize</p>
-                                <p style="font-size: 15px; margin-bottom: 24px;">Add some expenses to see your spending breakdown</p>
-                                <a href="/expenses/add" class="btn btn-primary" style="max-width: 200px; margin: 0 auto;">Add First Expense</a>
+            <% if (data && data.length > 0) { %>
+                <!-- Chart Section -->
+                <section style="padding: var(--space-2xl) var(--space-2xl) 0;">
+                    <div class="card" style="max-width: 900px; margin: 0 auto;">
+                        <div class="card-header">
+                            <h3>Spending by Category</h3>
+                            <span style="color: var(--text-secondary); font-size: 14px;">Total: €<%= total.toFixed(2) %></span>
+                        </div>
+                        <div class="card-body" style="padding: var(--space-2xl);">
+                            <div style="max-width: 500px; margin: 0 auto;">
+                                <canvas id="categoryChart"></canvas>
                             </div>
-                        <% } %>
-                    </div>
-                </div>
-
-                <!-- Category Breakdown List -->
-                <% if (data && data.length > 0) { %>
-                <div class="card" style="max-width: 800px; margin: var(--space-2xl) auto 0;">
-                    <div class="card-header">
-                        <h3>Category Breakdown</h3>
-                    </div>
-                    <div class="card-body">
-                        <div style="display: flex; flex-direction: column; gap: var(--space-md);">
-                            <% data.forEach(item => { %>
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-md); background-color: var(--bg-primary); border-radius: var(--radius-md);">
-                                    <div style="display: flex; align-items: center; gap: var(--space-md);">
-                                        <div style="width: 16px; height: 16px; border-radius: 50%; background-color: <%= item.color %>;"></div>
-                                        <span style="font-weight: 500; color: var(--text-primary);"><%= item.category %><% if(item.subcategory) { %> - <%= item.subcategory %><% } %></span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: var(--space-lg);">
-                                        <span style="color: var(--text-secondary); font-size: 14px;"><%= ((item.total / total) * 100).toFixed(1) %>%</span>
-                                        <span style="color: var(--accent); font-weight: 600; font-size: 18px;">€<%= item.total.toFixed(2) %></span>
-                                    </div>
-                                </div>
-                            <% }); %>
                         </div>
                     </div>
-                </div>
-                <% } %>
-            </section>
+                </section>
+
+                <!-- Category Breakdown -->
+                <section style="padding: var(--space-2xl);">
+                    <div class="card" style="max-width: 900px; margin: 0 auto;">
+                        <div class="card-header">
+                            <h3>Category Breakdown</h3>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: grid; gap: var(--space-sm);">
+                                <% data.forEach(item => { %>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-md); background-color: var(--bg-primary); border-radius: var(--radius-md);">
+                                        <div style="display: flex; align-items: center; gap: var(--space-md); flex: 1;">
+                                            <div style="width: 16px; height: 16px; border-radius: 50%; background-color: <%= item.color %>; flex-shrink: 0;"></div>
+                                            <span style="font-weight: 500; color: var(--text-primary);"><%= item.category %><% if(item.subcategory) { %> - <%= item.subcategory %><% } %></span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: var(--space-xl);">
+                                            <span style="color: var(--text-secondary); font-size: 14px; min-width: 50px; text-align: right;"><%= ((item.total / total) * 100).toFixed(1) %>%</span>
+                                            <span style="color: var(--accent); font-weight: 600; font-size: 18px; min-width: 100px; text-align: right;">€<%= item.total.toFixed(2) %></span>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Detailed Report Table -->
+                <section style="padding: 0 var(--space-2xl) var(--space-2xl);">
+                    <div class="card" style="max-width: 900px; margin: 0 auto;">
+                        <div class="card-header">
+                            <h3>Detailed Report</h3>
+                            <span style="color: var(--text-secondary); font-size: 14px;"><%= expenses.length %> entries</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Category</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% expenses.forEach(exp => { %>
+                                            <tr>
+                                                <td><%= new Date(exp.date).toLocaleDateString('de-DE') %></td>
+                                                <td>
+                                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                                        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: <%= exp.color %>; flex-shrink: 0;"></div>
+                                                        <%= exp.category %>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <% if (exp.subcategory) { %>
+                                                        <div><%= exp.subcategory %></div>
+                                                    <% } %>
+                                                    <% if (exp.note) { %>
+                                                        <div style="color: var(--text-secondary); font-size: 13px;"><%= exp.note %></div>
+                                                    <% } %>
+                                                    <% if (!exp.subcategory && !exp.note) { %>
+                                                        <span style="color: var(--text-secondary);">-</span>
+                                                    <% } %>
+                                                </td>
+                                                <td class="amount-cell">€<%= exp.amount.toFixed(2) %></td>
+                                            </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            <% } else { %>
+                <!-- Empty State -->
+                <section style="padding: var(--space-2xl);">
+                    <div class="card" style="max-width: 600px; margin: 0 auto;">
+                        <div class="card-body">
+                            <div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
+                                <div style="font-size: 80px; margin-bottom: 24px; opacity: 0.3;">📊</div>
+                                <p style="font-size: 24px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;">No data to analyze</p>
+                                <p style="font-size: 16px; margin-bottom: 32px;">Add some expenses to see charts and insights</p>
+                                <a href="/expenses/add" class="btn btn-primary" style="max-width: 220px; margin: 0 auto;">Add First Expense</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            <% } %>
         </main>
     </div>
 
@@ -109,15 +172,23 @@
             const chartData = {
                 labels: <%= JSON.stringify(data.map(d => d.category + (d.subcategory ? ' - ' + d.subcategory : ''))) %>,
                 datasets: [{
-                     <%= JSON.stringify(data.map(d => d.total)) %>,
+                    data: <%= JSON.stringify(data.map(d => d.total)) %>,
                     backgroundColor: <%= JSON.stringify(data.map(d => d.color)) %>,
                     borderColor: 'rgba(255, 255, 255, 0.1)',
                     borderWidth: 2
                 }]
             };
 
-            console.log('Chart ', chartData);
-            initChart('categoryChart', chartData);
+            console.log('Initializing chart with data:', chartData);
+            
+            // Wait for DOM to be ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    initChart('categoryChart', chartData);
+                });
+            } else {
+                initChart('categoryChart', chartData);
+            }
         <% } %>
     </script>
 </body>
