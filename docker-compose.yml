@@ -17,7 +17,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8067"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8067 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -25,4 +25,3 @@ services:
 
 volumes:
   spent-
-    driver: local
