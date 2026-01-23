@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Spent Tracker</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="app-title">Spent</h1>
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
+
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/all-expenses" class="nav-item">
+                    <span class="nav-icon">💰</span>
+                    <span>All Expenses</span>
+                </a>
+                <a href="/expenses/add" class="nav-item">
+                    <span class="nav-icon">➕</span>
+                    <span>Add Expense</span>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"><%= username.charAt(0).toUpperCase() %></div>
+                    <span class="user-name"><%= username %></span>
+                </div>
+                <a href="/settings" class="btn" style="width: 100%; margin-top: var(--space-md); background-color: var(--accent); color: white; text-align: center; padding: var(--space-md);">Settings</a>
+                <a href="/logout" class="logout-btn">Logout</a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="page-header">
+                <div class="header-content">
+                    <h2>Settings</h2>
+                    <p class="header-subtitle">Manage your account and preferences</p>
+                </div>
+            </header>
+
+            <!-- Settings Grid -->
+            <section style="padding: var(--space-2xl); display: grid; gap: var(--space-xl); max-width: 1000px;">
+                
+                <!-- Account Settings -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Account Settings</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: grid; gap: var(--space-lg);">
+                            
+                            <!-- Change Username -->
+                            <div style="padding: var(--space-lg); background-color: var(--bg-primary); border-radius: var(--radius-md);">
+                                <h4 style="margin-bottom: var(--space-sm); color: var(--text-primary);">Change Username</h4>
+                                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: var(--space-md);">Current: <strong><%= username %></strong></p>
+                                <form method="POST" action="/settings/change-username" style="display: flex; gap: var(--space-sm);">
+                                    <input type="text" name="newUsername" class="form-input" placeholder="New username" required style="flex: 1;">
+                                    <button type="submit" class="btn btn-primary">Update</button>
+                                </form>
+                            </div>
+
+                            <!-- Change Password -->
+                            <div style="padding: var(--space-lg); background-color: var(--bg-primary); border-radius: var(--radius-md);">
+                                <h4 style="margin-bottom: var(--space-sm); color: var(--text-primary);">Change Password</h4>
+                                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: var(--space-md);">Update your account password</p>
+                                <form method="POST" action="/settings/change-password">
+                                    <div style="display: grid; gap: var(--space-sm); margin-bottom: var(--space-md);">
+                                        <input type="password" name="currentPassword" class="form-input" placeholder="Current password" required>
+                                        <input type="password" name="newPassword" class="form-input" placeholder="New password" required>
+                                        <input type="password" name="confirmPassword" class="form-input" placeholder="Confirm new password" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Change Password</button>
+                                </form>
+                            </div>
+
+                            <!-- Recovery Email -->
+                            <div style="padding: var(--space-lg); background-color: var(--bg-primary); border-radius: var(--radius-md);">
+                                <h4 style="margin-bottom: var(--space-sm); color: var(--text-primary);">Recovery ID</h4>
+                                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: var(--space-md);">Set a recovery identifier for password reset</p>
+                                <form method="POST" action="/settings/set-recovery" style="display: flex; gap: var(--space-sm);">
+                                    <input type="text" name="recoveryId" class="form-input" placeholder="Recovery ID (email or phone)" style="flex: 1;">
+                                    <button type="submit" class="btn btn-primary">Save</button>
+                                </form>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Management -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Manage Categories</h3>
+                    </div>
+                    <div class="card-body">
+                        <% if (categories && categories.length > 0) { %>
+                            <div style="display: grid; gap: var(--space-sm);">
+                                <% categories.forEach(cat => { %>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-md); background-color: var(--bg-primary); border-radius: var(--radius-md);">
+                                        <span style="font-weight: 500; color: var(--text-primary);"><%= cat.name %></span>
+                                        <div style="display: flex; gap: var(--space-sm);">
+                                            <form method="POST" action="/settings/delete-category" style="display: inline;">
+                                                <input type="hidden" name="categoryName" value="<%= cat.name %>">
+                                                <button type="submit" class="btn btn-small btn-danger" onclick="return confirm('Delete category &quot;<%= cat.name %>&quot;? This will NOT delete expenses.')">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } else { %>
+                            <div class="empty-state">
+                                <p>No categories yet</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="card" style="border: 2px solid #FF3B30;">
+                    <div class="card-header" style="background-color: rgba(255, 59, 48, 0.1);">
+                        <h3 style="color: #FF3B30;">Danger Zone</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="padding: var(--space-lg); background-color: var(--bg-primary); border-radius: var(--radius-md);">
+                            <h4 style="margin-bottom: var(--space-sm); color: #FF3B30;">Delete All Data</h4>
+                            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: var(--space-md);">Permanently delete all your expenses. This cannot be undone.</p>
+                            <button class="btn btn-danger" onclick="deleteAllData()">Delete All Expenses</button>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/theme.js"></script>
+    <script>
+        function deleteAllData() {
+            if (confirm('Are you ABSOLUTELY sure? This will delete ALL your expenses forever!')) {
+                if (confirm('Last chance! This action cannot be undone. Delete everything?')) {
+                    fetch('/settings/delete-all-data', { method: 'POST' })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('All data deleted');
+                                window.location.href = '/dashboard';
+                            } else {
+                                alert('Error deleting data');
+                            }
+                        });
+                }
+            }
+        }
+    </script>
+</body>
+</html>
