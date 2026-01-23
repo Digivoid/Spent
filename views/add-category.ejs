@@ -1,28 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Add Category</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Category - Spent Tracker</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
-<body class="bg-light">
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h3 class="card-title mb-4">Add New Category</h3>
-                        <form method="POST">
-                            <div class="mb-3">
-                                <label class="form-label">Category Name</label>
-                                <input type="text" name="newCategory" class="form-control" placeholder="e.g., Food, Transport" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Add Category</button>
-                            <a href="/expenses/add" class="btn btn-secondary">Back</a>
-                        </form>
-                    </div>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="app-title">Spent</h1>
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
+
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/all-expenses" class="nav-item">
+                    <span class="nav-icon">💰</span>
+                    <span>All Expenses</span>
+                </a>
+                <a href="/expenses/add" class="nav-item active">
+                    <span class="nav-icon">➕</span>
+                    <span>Add Expense</span>
+                </a>
+                <a href="/report" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span>Reports</span>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"><%= username.charAt(0).toUpperCase() %></div>
+                    <span class="user-name"><%= username %></span>
+                </div>
+                <a href="/logout" class="logout-btn">Logout</a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="page-header">
+                <div class="header-content">
+                    <h2>New Category</h2>
+                    <p class="header-subtitle">Create a new expense category</p>
+                </div>
+            </header>
+
+            <div class="form-container">
+                <div class="form-card" style="max-width: 400px;">
+                    <form method="POST">
+                        <div class="form-group">
+                            <label class="form-label">Category Name</label>
+                            <input type="text" name="newCategory" class="form-input" placeholder="e.g., Food, Transport, Entertainment" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Create Category</button>
+                        <a href="/expenses/add" class="btn btn-secondary">Cancel</a>
+                    </form>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
+
+    <script src="/js/theme.js"></script>
 </body>
 </html>
