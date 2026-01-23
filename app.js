@@ -1,7 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
 const path = require('path');
+const bcrypt = require('bcrypt');
 const db = require('./db');
 const expenseRoutes = require('./routes/expenses');
 const reportRoutes = require('./routes/report');
@@ -14,78 +16,112 @@ app.use(express.static('public'));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// SECURE SESSION
 app.use(session({
-    secret: 'supersecretkey',
+    secret: process.env.SESSION_SECRET || '64-char-super-secure-random-secret-key-change-in-prod',
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: false,
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000 
+    }
 }));
 
-// Default user
-db.get("SELECT COUNT(*) AS count FROM users", (err, row) => {
-    if (row.count === 0) {
-        db.run("INSERT INTO users(username,password) VALUES(?,?)", ["admin","admin123"]);
-        console.log("Default user created: admin/admin123");
+// Database migration - Add time column if missing
+db.get("PRAGMA table_info(expenses)", (err, rows) => {
+    const hasTime = rows.some(row => row.name === 'time');
+    if (!hasTime) {
+        db.run("ALTER TABLE expenses ADD COLUMN time TEXT");
+        console.log("Added time column to expenses table");
     }
 });
 
-// Login routes
-app.get('/', (req,res)=>res.render('login',{ error:null }));
-app.post('/login',(req,res)=>{
+// Default admin user (hashed password)
+const defaultPassword = 'admin123';
+bcrypt.hash(defaultPassword, 10, (err, hash) => {
+    db.get("SELECT COUNT(*) AS count FROM users", (err, row) => {
+        if (row.count === 0) {
+            db.run("INSERT INTO users(username, password) VALUES(?,?)", ["admin", hash]);
+            console.log("Default admin created: admin/admin123");
+        }
+    });
+});
+
+// Middleware to check auth
+const requireAuth = (req, res, next) => {
+    if (!req.session.user_id) return res.redirect('/');
+    next();
+};
+
+// Routes
+app.get('/', (req, res) => res.render('login', { error: null }));
+app.get('/reset-password', (req, res) => res.render('reset-password'));
+app.get('/change-credentials', requireAuth, (req, res) => res.render('change-credentials'));
+
+app.post('/login', (req, res) => {
     const { username, password } = req.body;
-    db.get("SELECT * FROM users WHERE username=? AND password=?", [username,password], (err,row)=>{
-        if(row){
+    db.get("SELECT * FROM users WHERE username=?", [username], async (err, row) => {
+        if (row && await bcrypt.compare(password, row.password)) {
             req.session.user_id = row.id;
             req.session.username = row.username;
-            if(username==="admin" && password==="admin123") return res.redirect('/change-credentials');
+            if (username === "admin" && password === "admin123") {
+                return res.redirect('/change-credentials');
+            }
             res.redirect('/dashboard');
-        }else res.render('login',{ error:"Invalid login" });
+        } else {
+            res.render('login', { error: "Invalid login credentials" });
+        }
     });
 });
 
-// Change credentials
-app.get('/change-credentials',(req,res)=>{
-    if(!req.session.user_id) return res.redirect('/');
-    res.render('change-credentials');
-});
-app.post('/change-credentials',(req,res)=>{
-    if(!req.session.user_id) return res.redirect('/');
+app.post('/change-credentials', requireAuth, (req, res) => {
     const { newUsername, newPassword } = req.body;
-    db.run("UPDATE users SET username=?,password=? WHERE id=?",
-        [newUsername,newPassword,req.session.user_id],
-        ()=>res.send('Credentials updated! <a href="/">Login</a>'));
-});
-
-// Reset password
-app.get('/reset-password',(req,res)=>res.render('reset-password'));
-app.post('/reset-password',(req,res)=>{
-    const { username,newPassword } = req.body;
-    db.run("UPDATE users SET password=? WHERE username=?",[newPassword,username],function(){
-        if(this.changes>0) res.send('Password reset successfully! <a href="/">Login</a>');
-        else res.send('Username not found.');
+    bcrypt.hash(newPassword, 10, (err, hash) => {
+        db.run("UPDATE users SET username=?, password=? WHERE id=?", 
+            [newUsername, hash, req.session.user_id], 
+            () => res.send('✅ Credentials updated! <a href="/">Login</a>')
+        );
     });
 });
 
-// Dashboard
-app.get('/dashboard',(req,res)=>{
-    if(!req.session.user_id) return res.redirect('/');
-    db.all("SELECT id, category, subcategory, note, date, amount, color FROM expenses WHERE user_id=?",[req.session.user_id], (err, rows)=>{
-        const totalExpenses = rows.reduce((sum,e)=>sum+e.amount,0);
-        const recentExpenses = rows.sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
-        const chartData = [];
-        const map = {};
-        rows.forEach(e=>{
-            const key = e.category + (e.subcategory ? ' - '+e.subcategory : '');
-            if(!map[key]){
-                map[key] = { id:e.id, category:e.category, subcategory:e.subcategory, total:e.amount, color:e.color };
-            } else map[key].total += e.amount;
+app.post('/reset-password', (req, res) => {
+    const { username, newPassword } = req.body;
+    bcrypt.hash(newPassword, 10, (err, hash) => {
+        db.run("UPDATE users SET password=? WHERE username=?", [hash, username], function() {
+            if (this.changes > 0) {
+                res.send('✅ Password reset! <a href="/">Login</a>');
+            } else {
+                res.send('❌ Username not found.');
+            }
         });
-        for(let k in map) chartData.push(map[k]);
-        res.render('dashboard',{ data: chartData, totalExpenses, recentExpenses, username:req.session.username });
     });
 });
 
-// Expenses & Reports
-app.use('/expenses',expenseRoutes);
-app.use('/report',reportRoutes);
+app.get('/dashboard', requireAuth, (req, res) => {
+    db.all("SELECT id, category, subcategory, note, date, time, amount, color FROM expenses WHERE user_id=?", 
+        [req.session.user_id], (err, rows) => {
+        const totalExpenses = rows.reduce((sum, e) => sum + e.amount, 0);
+        const recentExpenses = rows.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+        
+        const chartData = {};
+        rows.forEach(e => {
+            const key = e.category + (e.subcategory ? ' - ' + e.subcategory : '');
+            chartData[key] = chartData[key] || { total: 0, color: e.color || '#007bff', category: e.category, subcategory: e.subcategory };
+            chartData[key].total += e.amount;
+        });
+        
+        res.render('dashboard', { 
+             Object.values(chartData), 
+            totalExpenses, 
+            recentExpenses, 
+            username: req.session.username 
+        });
+    });
+});
 
-app.listen(8067,'0.0.0.0',()=>console.log("Server running on port 8067"));
+app.use('/expenses', requireAuth, expenseRoutes);
+app.use('/report', requireAuth, reportRoutes);
+
+const PORT = process.env.PORT || 8067;
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));
