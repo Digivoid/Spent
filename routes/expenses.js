@@ -4,9 +4,9 @@ const db = require('../db');
 
 // GET add expense page
 router.get('/add', (req, res) => {
-    db.all("SELECT DISTINCT category FROM expenses WHERE user_id=? ORDER BY category", 
-        [req.session.user_id], (err, categories) => {
-        if (!categories) categories = [];
+    db.all("SELECT DISTINCT name FROM categories WHERE user_id=? ORDER BY name", 
+        [req.session.user_id], (err, rows) => {
+        const categories = rows || [];
         res.render('add-expense', { categories, username: req.session.username });
     });
 });
@@ -38,16 +38,26 @@ router.get('/add-category', (req, res) => {
     res.render('add-category', { username: req.session.username });
 });
 
-// POST add category (just returns to add-expense with new category)
+// POST add category
 router.post('/add-category', (req, res) => {
     const { newCategory } = req.body;
     
-    if (!newCategory) {
+    if (!newCategory || newCategory.trim() === '') {
         return res.send('❌ Category name required! <a href="/expenses/add-category">Back</a>');
     }
     
-    // Categories are stored by adding an expense, so just redirect
-    res.redirect('/expenses/add');
+    db.run(
+        "INSERT OR IGNORE INTO categories(user_id, name) VALUES(?,?)",
+        [req.session.user_id, newCategory.trim()],
+        (err) => {
+            if (err) {
+                console.error('Error adding category:', err);
+                return res.send('❌ Error adding category! <a href="/expenses/add-category">Back</a>');
+            }
+            console.log(`✅ Category added: ${newCategory}`);
+            res.redirect('/expenses/add');
+        }
+    );
 });
 
 // DELETE expense
