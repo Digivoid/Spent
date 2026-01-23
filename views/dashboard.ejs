@@ -133,7 +133,6 @@
     <script>
         console.log('Dashboard script loading');
         
-        // Chart data with debugging
         <% if (data && data.length > 0) { %>
             console.log('Has data, creating chart');
             
@@ -147,21 +146,19 @@
                 }]
             };
 
-            console.log('Chart ', chartData);
+            console.log('Chart data ready');
             
-            // Wait for DOM and Chart.js to be ready
             if (typeof Chart !== 'undefined' && typeof initChart === 'function') {
                 initChart('spendingChart', chartData);
-                console.log('Chart initialized');
             } else {
-                console.error('Chart.js or initChart function not found');
+                console.error('Chart.js or initChart not loaded');
             }
         <% } else { %>
             console.log('No data - showing empty state');
             const chartCanvas = document.getElementById('spendingChart');
             if (chartCanvas) {
                 const parent = chartCanvas.parentElement;
-                parent.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><p style="font-size: 16px;">No expenses yet</p><p style="margin-top: 8px; font-size: 14px;">Add your first expense to see the chart</p></div>';
+                parent.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);"><div style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;">📊</div><p style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">No expenses yet</p><p style="font-size: 14px;">Add your first expense to see spending breakdown</p></div>';
             }
         <% } %>
     </script>
