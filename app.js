@@ -28,9 +28,9 @@ app.use(session({
     store: new FileStore({ path: './data/sessions' }),
     secret: process.env.SESSION_SECRET || '64-char-super-secure-random-secret-key-change-in-prod',
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: { 
-        secure: process.env.NODE_ENV === 'production',
+        secure: false,
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000,
         sameSite: 'lax'
