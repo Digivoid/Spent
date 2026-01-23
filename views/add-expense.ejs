@@ -1,73 +1,134 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Add Expense</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Expense - Spent Tracker</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
-<body class="bg-light">
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="card-title mb-0">Add Expense</h3>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="location.reload()">🔄 Refresh</button>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="app-title">Spent</h1>
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
+
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/all-expenses" class="nav-item">
+                    <span class="nav-icon">💰</span>
+                    <span>All Expenses</span>
+                </a>
+                <a href="/expenses/add" class="nav-item active">
+                    <span class="nav-icon">➕</span>
+                    <span>Add Expense</span>
+                </a>
+                <a href="/report" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span>Reports</span>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"><%= username.charAt(0).toUpperCase() %></div>
+                    <span class="user-name"><%= username %></span>
+                </div>
+                <a href="/logout" class="logout-btn">Logout</a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="page-header">
+                <div class="header-content">
+                    <h2>Add Expense</h2>
+                    <p class="header-subtitle">Create a new expense entry</p>
+                </div>
+            </header>
+
+            <div class="form-container">
+                <div class="form-card">
+                    <form method="POST">
+                        <!-- Category -->
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <div style="display: flex; gap: var(--space-sm);">
+                                <select name="category" class="form-select" required style="flex: 1;">
+                                    <option value="">Select a category...</option>
+                                    <% categories.forEach(cat => { %>
+                                        <option value="<%= cat.name %>"><%= cat.name %></option>
+                                    <% }); %>
+                                </select>
+                                <a href="/expenses/add-category" class="btn btn-small" style="background-color: var(--accent); color: white; padding: var(--space-md);">New</a>
+                            </div>
                         </div>
-                        
-                        <form method="POST">
-                            <div class="mb-3">
-                                <label class="form-label">Category</label>
-                                <div class="input-group">
-                                    <select name="category" class="form-select" required>
-                                        <option value="">Select category...</option>
-                                        <% categories.forEach(cat => { %>
-                                            <option value="<%= cat.name %>"><%= cat.name %></option>
-                                        <% }); %>
-                                    </select>
-                                    <a href="/expenses/add-category" class="btn btn-outline-primary">+ New</a>
-                                </div>
-                            </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Subcategory (Optional)</label>
-                                <input type="text" name="subcategory" class="form-control" placeholder="e.g., Groceries">
-                            </div>
+                        <!-- Subcategory -->
+                        <div class="form-group">
+                            <label class="form-label">Subcategory (Optional)</label>
+                            <input type="text" name="subcategory" class="form-input" placeholder="e.g., Groceries, Electronics">
+                        </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Note</label>
-                                <input type="text" name="note" class="form-control" placeholder="e.g., Weekly shopping">
-                            </div>
+                        <!-- Note -->
+                        <div class="form-group">
+                            <label class="form-label">Note (Optional)</label>
+                            <input type="text" name="note" class="form-input" placeholder="e.g., Weekly shopping">
+                        </div>
 
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Date</label>
-                                    <input type="date" name="date" class="form-control" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Time (Optional)</label>
-                                    <input type="time" name="time" class="form-control">
-                                </div>
+                        <!-- Date & Time -->
+                        <div class="form-group inline">
+                            <div>
+                                <label class="form-label">Date</label>
+                                <input type="date" name="date" class="form-input" id="dateInput" required>
                             </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Amount (€)</label>
-                                    <input type="number" name="amount" class="form-control" step="0.01" placeholder="0.00" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Color</label>
-                                    <input type="color" name="color" class="form-control" style="height: 38px;" value="#007bff">
-                                </div>
+                            <div>
+                                <label class="form-label">Time (Optional)</label>
+                                <input type="time" name="time" class="form-input" id="timeInput">
                             </div>
+                        </div>
 
-                            <button type="submit" class="btn btn-primary w-100">Add Expense</button>
-                            <a href="/dashboard" class="btn btn-secondary w-100 mt-2">Back to Dashboard</a>
-                        </form>
-                    </div>
+                        <!-- Amount & Color -->
+                        <div class="form-group inline">
+                            <div>
+                                <label class="form-label">Amount (€)</label>
+                                <input type="number" name="amount" class="form-input" step="0.01" placeholder="0.00" required>
+                            </div>
+                            <div>
+                                <label class="form-label">Color</label>
+                                <input type="color" name="color" class="form-input" value="#00A9FF" style="height: 44px; cursor: pointer;">
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <button type="submit" class="btn btn-primary">Add Expense</button>
+                        <a href="/dashboard" class="btn btn-secondary">Cancel</a>
+                    </form>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
+
+    <script src="/js/theme.js"></script>
+    <script>
+        // Auto-fill date and time
+        const dateInput = document.getElementById('dateInput');
+        const timeInput = document.getElementById('timeInput');
+
+        const now = new Date();
+        const date = now.toISOString().split('T')[0];
+        const time = now.toTimeString().slice(0, 5);
+
+        dateInput.value = date;
+        timeInput.value = time;
+    </script>
 </body>
 </html>
