@@ -29,11 +29,14 @@ app.use(session({
 }));
 
 // Database migration - Add time column if missing
-db.get("PRAGMA table_info(expenses)", (err, rows) => {
-    const hasTime = rows.some(row => row.name === 'time');
-    if (!hasTime) {
-        db.run("ALTER TABLE expenses ADD COLUMN time TEXT");
-        console.log("Added time column to expenses table");
+db.all("PRAGMA table_info(expenses)", (err, rows) => {
+    if (rows && Array.isArray(rows)) {
+        const hasTime = rows.some(row => row.name === 'time');
+        if (!hasTime) {
+            db.run("ALTER TABLE expenses ADD COLUMN time TEXT", (err) => {
+                if (!err) console.log("✅ Added time column to expenses table");
+            });
+        }
     }
 });
 
@@ -41,9 +44,9 @@ db.get("PRAGMA table_info(expenses)", (err, rows) => {
 const defaultPassword = 'admin123';
 bcrypt.hash(defaultPassword, 10, (err, hash) => {
     db.get("SELECT COUNT(*) AS count FROM users", (err, row) => {
-        if (row.count === 0) {
+        if (row && row.count === 0) {
             db.run("INSERT INTO users(username, password) VALUES(?,?)", ["admin", hash]);
-            console.log("Default admin created: admin/admin123");
+            console.log("✅ Default admin created: admin/admin123");
         }
     });
 });
@@ -101,18 +104,37 @@ app.post('/reset-password', (req, res) => {
 app.get('/dashboard', requireAuth, (req, res) => {
     db.all("SELECT id, category, subcategory, note, date, time, amount, color FROM expenses WHERE user_id=?", 
         [req.session.user_id], (err, rows) => {
+        if (!rows) rows = [];
+        
         const totalExpenses = rows.reduce((sum, e) => sum + e.amount, 0);
         const recentExpenses = rows.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
         
         const chartData = {};
         rows.forEach(e => {
             const key = e.category + (e.subcategory ? ' - ' + e.subcategory : '');
-            chartData[key] = chartData[key] || { total: 0, color: e.color || '#007bff', category: e.category, subcategory: e.subcategory };
+            if (!chartData[key]) {
+                chartData[key] = { 
+                    id: e.id,
+                    total: 0, 
+                    color: e.color || '#007bff', 
+                    category: e.category, 
+                    subcategory: e.subcategory || '',
+                    note: e.note || '',
+                    date: e.date,
+                    time: e.time || ''
+                };
+            }
             chartData[key].total += e.amount;
         });
         
+        // Convert to array
+        const chartDataArray = [];
+        for (let key in chartData) {
+            chartDataArray.push(chartData[key]);
+        }
+        
         res.render('dashboard', { 
-            chartdata: Object.values(chartData), 
+             chartDataArray, 
             totalExpenses, 
             recentExpenses, 
             username: req.session.username 
