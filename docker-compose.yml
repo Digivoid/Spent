@@ -7,10 +7,7 @@ services:
       - "8067:8067"
     environment:
       - SESSION_SECRET=${SESSION_SECRET}
-      - NODE_ENV=production
+      - NODE_ENV=development
     volumes:
       - spent_db:/app/data
     restart: unless-stopped
-
-volumes:
-  spent_db:
