@@ -22,7 +22,7 @@
                                     <select name="category" class="form-select" required>
                                         <option value="">Select category...</option>
                                         <% categories.forEach(cat => { %>
-                                            <option value="<%= cat.category %>"><%= cat.category %></option>
+                                            <option value="<%= cat.name %>"><%= cat.name %></option>
                                         <% }); %>
                                     </select>
                                     <a href="/expenses/add-category" class="btn btn-outline-primary">+ New</a>
