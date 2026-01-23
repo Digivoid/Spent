@@ -2,46 +2,46 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-const categoryColors = ['#007bff','#28a745','#dc3545','#ffc107','#17a2b8','#6f42c1','#fd7e14'];
+const categoryColors = ['#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8', '#6f42c1', '#fd7e14', '#e83e8c'];
 
-// Add expense
-router.post('/add',(req,res)=>{
-    const { amount, category, subcategory, note, date } = req.body;
-    const color = categoryColors[Math.floor(Math.random()*categoryColors.length)];
-    db.run("INSERT INTO expenses(user_id,amount,category,subcategory,note,date,color) VALUES(?,?,?,?,?,?,?)",
-        [req.session.user_id,amount,category,subcategory,note,date,color],()=>res.redirect('/dashboard'));
+router.get('/edit/:id', (req, res) => {
+    db.get("SELECT * FROM expenses WHERE id=? AND user_id=?", 
+        [req.params.id, req.session.user_id], (err, expense) => {
+        if (expense) {
+            res.render('edit-expense', { expense });
+        } else {
+            res.redirect('/dashboard');
+        }
+    });
 });
 
-// Edit expense
-router.post('/edit/:id',(req,res)=>{
-    const { amount, category, subcategory, note, date } = req.body;
-    db.run("UPDATE expenses SET amount=?, category=?, subcategory=?, note=?, date=? WHERE id=?",
-        [amount,category,subcategory,note,date,req.params.id],()=>res.redirect('/dashboard'));
+router.post('/add', (req, res) => {
+    const { amount, category, subcategory, note, date, time } = req.body;
+    const color = categoryColors[Math.floor(Math.random() * categoryColors.length)];
+    db.run("INSERT INTO expenses(user_id, amount, category, subcategory, note, date, time, color) VALUES(?,?,?,?,?,?,?,?)",
+        [req.session.user_id, parseFloat(amount), category, subcategory || '', note || '', date, time || '', color],
+        () => res.redirect('/dashboard')
+    );
 });
 
-// Delete expense
-router.get('/delete/:id',(req,res)=>{
-    db.run("DELETE FROM expenses WHERE id=?",[req.params.id],()=>res.redirect('/dashboard'));
+router.post('/edit/:id', (req, res) => {
+    const { amount, category, subcategory, note, date, time } = req.body;
+    db.run("UPDATE expenses SET amount=?, category=?, subcategory=?, note=?, date=?, time=? WHERE id=? AND user_id=?",
+        [parseFloat(amount), category, subcategory || '', note || '', date, time || '', req.params.id, req.session.user_id],
+        () => res.redirect('/dashboard')
+    );
 });
 
-// Add category
-router.post('/add-category',(req,res)=>{
-    const { category, subcategory, color } = req.body;
-    db.run("INSERT INTO expenses(user_id,category,subcategory,amount,color,date) VALUES(?,?,?,?,?,?)",
-        [req.session.user_id,category,subcategory||'',0,color,new Date().toISOString()],
-        ()=>res.sendStatus(200));
+router.get('/delete/:id', (req, res) => {
+    db.run("DELETE FROM expenses WHERE id=? AND user_id=?", [req.params.id, req.session.user_id], () => res.redirect('/dashboard'));
 });
 
-// Update category
-router.post('/update-category',(req,res)=>{
-    const { id, field, value } = req.body;
-    db.run(`UPDATE expenses SET ${field}=? WHERE id=?`, [value,id], ()=>res.sendStatus(200));
-});
-
-// Delete category
-router.post('/delete-category',(req,res)=>{
-    const { id } = req.body;
-    db.run("DELETE FROM expenses WHERE id=?", [id], ()=>res.sendStatus(200));
+router.post('/add-category', (req, res) => {
+    const { category, color } = req.body;
+    db.run("INSERT INTO expenses(user_id, category, amount, color, date) VALUES(?,?,?,?,?)",
+        [req.session.user_id, category, 0, color, new Date().toISOString().split('T')[0]],
+        () => res.json({ success: true })
+    );
 });
 
 module.exports = router;
