@@ -9,5 +9,8 @@ services:
       - SESSION_SECRET=${SESSION_SECRET}
       - NODE_ENV=production
     volumes:
-      - .//app/data
+      - spent_db:/app/data
     restart: unless-stopped
+
+volumes:
+  spent_db:
