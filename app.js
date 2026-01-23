@@ -64,16 +64,30 @@ app.get('/change-credentials', requireAuth, (req, res) => res.render('change-cre
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
+    console.log(`🔍 Login attempt: username="${username}", password="${password}"`);
+    
     db.get("SELECT * FROM users WHERE username=?", [username], async (err, row) => {
-        if (row && await bcrypt.compare(password, row.password)) {
-            req.session.user_id = row.id;
-            req.session.username = row.username;
-            if (username === "admin" && password === "admin123") {
-                return res.redirect('/change-credentials');
+        console.log(`📊 Database query result:`, row);
+        
+        if (row) {
+            const match = await bcrypt.compare(password, row.password);
+            console.log(`🔐 Password match:`, match);
+            
+            if (match) {
+                req.session.user_id = row.id;
+                req.session.username = row.username;
+                console.log(`✅ Login successful`);
+                if (username === "admin" && password === "admin123") {
+                    return res.redirect('/change-credentials');
+                }
+                res.redirect('/dashboard');
+            } else {
+                console.log(`❌ Password mismatch`);
+                res.render('login', { error: "Invalid password" });
             }
-            res.redirect('/dashboard');
         } else {
-            res.render('login', { error: "Invalid login credentials" });
+            console.log(`❌ User not found`);
+            res.render('login', { error: "User not found" });
         }
     });
 });
