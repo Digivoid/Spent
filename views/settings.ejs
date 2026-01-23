@@ -30,6 +30,10 @@
                     <span class="nav-icon">➕</span>
                     <span>Add Expense</span>
                 </a>
+                <a href="/graph" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span>Analytics</span>
+                </a>
             </div>
 
             <div class="sidebar-footer">
@@ -110,7 +114,7 @@
                         <% if (categories && categories.length > 0) { %>
                             <div style="display: grid; gap: var(--space-sm);">
                                 <% categories.forEach(cat => { %>
-                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-md); background-color: var(--bg-primary); border-radius: var(--radius-md);">
+                                    <div style="display: flex; justify-space-between; align-items: center; padding: var(--space-md); background-color: var(--bg-primary); border-radius: var(--radius-md);">
                                         <span style="font-weight: 500; color: var(--text-primary);"><%= cat.name %></span>
                                         <div style="display: flex; gap: var(--space-sm);">
                                             <form method="POST" action="/settings/delete-category" style="display: inline;">
