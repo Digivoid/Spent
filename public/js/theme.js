@@ -1,8 +1,8 @@
-// Dark/Light Theme Toggle
+// Dark/Light Theme Toggle - Complete File
 (function() {
     'use strict';
     
-    document.addEventListener('DOMContentLoaded', function() {
+    function initTheme() {
         const themeToggle = document.getElementById('themeToggle');
         const body = document.body;
         
@@ -29,5 +29,12 @@
                 icon.textContent = theme === 'dark' ? '☀️' : '🌙';
             }
         }
-    });
+    }
+    
+    // Run on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTheme);
+    } else {
+        initTheme();
+    }
 })();
