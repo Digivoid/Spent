@@ -1,28 +1,23 @@
-# Multi-stage production build
-FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci --only=production --no-optional && npm cache clean --force
+FROM node:20
 
-FROM node:20-alpine AS runner
+# Set working directory
 WORKDIR /app
 
-ENV NODE_ENV=production
-ENV PORT=8067
+# Copy package files
+COPY package*.json ./
 
-# Copy built dependencies
-COPY --from=deps /app/node_modules ./node_modules
+# Install production dependencies
+RUN npm install --production
+
+# Copy all source code
 COPY . .
 
-# Create data dir with correct permissions
-RUN mkdir -p /app/data && \
-    chown -R 1000:1000 /app/data && \
-    chmod 755 /app/data
-
-USER node
-
+# Expose port
 EXPOSE 8067
-HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
-  CMD node healthcheck.js || exit 1
 
-CMD ["node", "app.js"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:8067 || exit 1
+
+# Start app
+CMD ["npm", "start"]
