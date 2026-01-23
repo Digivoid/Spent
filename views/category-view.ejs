@@ -6,7 +6,160 @@
     <title>Category - Spent Tracker</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
+<body><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category - Spent Tracker</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
 <body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="app-title">Spent</h1>
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
+
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/all-expenses" class="nav-item active">
+                    <span class="nav-icon">💰</span>
+                    <span>All Expenses</span>
+                </a>
+                <a href="/expenses/add" class="nav-item">
+                    <span class="nav-icon">➕</span>
+                    <span>Add Expense</span>
+                </a>
+                <a href="/graph" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span>Analytics</span>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"><%= username.charAt(0).toUpperCase() %></div>
+                    <span class="user-name"><%= username %></span>
+                </div>
+                <a href="/settings" class="btn" style="width: 100%; margin-top: var(--space-md); background-color: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary); text-align: center; padding: var(--space-md);">Settings</a>
+                <a href="/logout" class="logout-btn">Logout</a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="page-header">
+                <div class="header-content">
+                    <h2><%= category %></h2>
+                    <p class="header-subtitle"><%= expenses.length %> expenses in this category</p>
+                </div>
+            </header>
+
+            <!-- Category Summary -->
+            <section style="padding: var(--space-2xl);">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Spent</div>
+                        <div class="stat-value">€<%= total.toFixed(2) %></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Number of Entries</div>
+                        <div class="stat-value"><%= expenses.length %></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Average Expense</div>
+                        <div class="stat-value">€<%= (total / (expenses.length || 1)).toFixed(2) %></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Expenses Table -->
+            <section style="padding: 0 var(--space-2xl) var(--space-2xl);">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Expenses</h3>
+                        <a href="/all-expenses" class="btn btn-small" style="background-color: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary);">Back</a>
+                    </div>
+                    <div class="card-body">
+                        <% if (expenses && expenses.length > 0) { %>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Description</th>
+                                            <th>Date</th>
+                                            <th>Time</th>
+                                            <th>Amount</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% expenses.forEach(exp => { %>
+                                            <tr>
+                                                <td>
+                                                    <% if (exp.subcategory) { %>
+                                                        <div><%= exp.subcategory %></div>
+                                                    <% } %>
+                                                    <% if (exp.note) { %>
+                                                        <div style="color: var(--text-secondary); font-size: 13px;"><%= exp.note %></div>
+                                                    <% } %>
+                                                    <% if (!exp.subcategory && !exp.note) { %>
+                                                        <div style="color: var(--text-secondary);">-</div>
+                                                    <% } %>
+                                                </td>
+                                                <td><%= new Date(exp.date).toLocaleDateString('de-DE') %></td>
+                                                <td><%= exp.time || '-' %></td>
+                                                <td class="amount-cell">€<%= exp.amount.toFixed(2) %></td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <a href="/expenses/edit/<%= exp.id %>" class="btn btn-small" style="background-color: var(--bg-primary); border: 1px solid var(--border); color: var(--accent); padding: 4px 8px;">Edit</a>
+                                                        <button class="btn btn-small btn-danger" style="padding: 4px 8px;" onclick="deleteExpense(<%= exp.id %>)">Delete</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <% } else { %>
+                            <div class="empty-state">
+                                <p>No expenses in this category</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/theme.js"></script>
+    <script>
+        function deleteExpense(id) {
+            if (confirm('Delete this expense?')) {
+                fetch(`/expenses/${id}`, { method: 'DELETE' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error deleting expense');
+                        }
+                    });
+            }
+        }
+    </script>
+</body>
+</html>
+
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <nav class="sidebar">
