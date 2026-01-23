@@ -30,15 +30,6 @@
                     <span class="nav-icon">➕</span>
                     <span>Add Expense</span>
                 </a>
-                <a href="/graph" class="nav-item">
-    <span class="nav-icon">📈</span>
-    <span>Analytics</span>
-</a>
-<a href="/report" class="nav-item">
-    <span class="nav-icon">📄</span>
-    <span>Reports</span>
-</a>
-
             </div>
 
             <div class="sidebar-footer">
@@ -46,6 +37,7 @@
                     <div class="user-avatar"><%= username.charAt(0).toUpperCase() %></div>
                     <span class="user-name"><%= username %></span>
                 </div>
+                <a href="/settings" class="btn" style="width: 100%; margin-top: var(--space-md); background-color: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary); text-align: center; padding: var(--space-md);">Settings</a>
                 <a href="/logout" class="logout-btn">Logout</a>
             </div>
         </nav>
@@ -69,43 +61,58 @@
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-label">Recent Expenses</div>
-                    <div class="stat-value"><%= recentExpenses.length %></div>
-                    <div class="stat-change">Last 5 entries</div>
+                    <div class="stat-label">This Month</div>
+                    <div class="stat-value">€<%= thisMonthTotal %></div>
+                    <div class="stat-change">Current month</div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-label">Categories</div>
-                    <div class="stat-value"><%= data.length %></div>
-                    <div class="stat-change">Active</div>
+                    <div class="stat-label">Biggest Expense</div>
+                    <div class="stat-value">€<%= biggestExpense %></div>
+                    <div class="stat-change">Largest transaction</div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-label">Avg. Expense</div>
-                    <div class="stat-value">€<%= (totalExpenses / (recentExpenses.length || 1)).toFixed(2) %></div>
-                    <div class="stat-change">Per entry</div>
+                    <div class="stat-label">Top Category</div>
+                    <div class="stat-value" style="font-size: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= topCategory %></div>
+                    <div class="stat-change">Most used</div>
                 </div>
             </section>
 
-            <!-- Charts & Recent -->
-<section class="dashboard-grid">
-    <!-- Analytics Link -->
-    <div class="card chart-card">
-        <div class="card-header">
-            <h3>Spending Analysis</h3>
-        </div>
-        <div class="card-body">
-            <div style="text-align: center; padding: 60px 20px;">
-                <div style="font-size: 64px; margin-bottom: 24px; opacity: 0.5;">📊</div>
-                <p style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;">View Spending Breakdown</p>
-                <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 24px;">See visual charts and category analysis</p>
-                <a href="/graph" class="btn btn-primary" style="max-width: 200px; margin: 0 auto;">View Analytics</a>
-            </div>
-        </div>
-    </div>
+            <!-- Quick Actions Grid -->
+            <section class="dashboard-grid">
+                <!-- Analytics Card -->
+                <a href="/graph" class="card chart-card" style="text-decoration: none; cursor: pointer; transition: var(--transition);">
+                    <div class="card-header">
+                        <h3>Analytics</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <div style="font-size: 56px; margin-bottom: 16px; opacity: 0.6;">📈</div>
+                            <p style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Spending Breakdown</p>
+                            <p style="font-size: 13px; color: var(--text-secondary);">View charts and insights</p>
+                        </div>
+                    </div>
+                </a>
 
-                <!-- Recent Expenses -->
-                <div class="card recent-card">
+                <!-- Reports Card -->
+                <a href="/report" class="card chart-card" style="text-decoration: none; cursor: pointer; transition: var(--transition);">
+                    <div class="card-header">
+                        <h3>Reports</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <div style="font-size: 56px; margin-bottom: 16px; opacity: 0.6;">📄</div>
+                            <p style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Expense Report</p>
+                            <p style="font-size: 13px; color: var(--text-secondary);">View detailed table</p>
+                        </div>
+                    </div>
+                </a>
+            </section>
+
+            <!-- Recent Expenses -->
+            <section style="padding: 0 var(--space-2xl) var(--space-2xl);">
+                <div class="card">
                     <div class="card-header">
                         <h3>Recent Expenses</h3>
                         <a href="/all-expenses" class="view-all-link">View All</a>
@@ -129,6 +136,7 @@
                         <% } else { %>
                             <div class="empty-state">
                                 <p>No expenses yet</p>
+                                <a href="/expenses/add" class="btn btn-primary" style="margin-top: var(--space-lg); max-width: 200px;">Add First Expense</a>
                             </div>
                         <% } %>
                     </div>
@@ -137,7 +145,6 @@
         </main>
     </div>
 
-<script src="/js/theme.js"></script>
-
+    <script src="/js/theme.js"></script>
 </body>
 </html>
