@@ -1,8 +1,10 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const FileStore = require('session-file-store')(session);
 const bodyParser = require('body-parser');
 const path = require('path');
+const fs = require('fs');
 const bcrypt = require('bcrypt');
 const db = require('./db');
 const expenseRoutes = require('./routes/expenses');
@@ -16,15 +18,22 @@ app.use(express.static('public'));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// SECURE SESSION
+// Create sessions directory
+if (!fs.existsSync('./data/sessions')) {
+    fs.mkdirSync('./data/sessions', { recursive: true });
+}
+
+// FILE-BASED SESSION STORE (persists across restarts)
 app.use(session({
+    store: new FileStore({ path: './data/sessions' }),
     secret: process.env.SESSION_SECRET || '64-char-super-secure-random-secret-key-change-in-prod',
     resave: false,
     saveUninitialized: false,
     cookie: { 
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: 'lax'
     }
 }));
 
@@ -64,64 +73,83 @@ app.get('/change-credentials', requireAuth, (req, res) => res.render('change-cre
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
-    console.log(`🔍 Login attempt: username="${username}", password="${password}"`);
+    console.log(`🔍 Login attempt: username="${username}"`);
     
     db.get("SELECT * FROM users WHERE username=?", [username], async (err, row) => {
-        console.log(`📊 Database query result:`, row);
-        
         if (row) {
             const match = await bcrypt.compare(password, row.password);
-            console.log(`🔐 Password match:`, match);
             
             if (match) {
                 req.session.user_id = row.id;
                 req.session.username = row.username;
-                console.log(`✅ Login successful`);
+                console.log(`✅ Login successful for ${username}`);
+                
                 if (username === "admin" && password === "admin123") {
                     return res.redirect('/change-credentials');
                 }
                 res.redirect('/dashboard');
             } else {
-                console.log(`❌ Password mismatch`);
-                res.render('login', { error: "Invalid password" });
+                console.log(`❌ Invalid password for ${username}`);
+                res.render('login', { error: "Invalid credentials" });
             }
         } else {
-            console.log(`❌ User not found`);
-            res.render('login', { error: "User not found" });
+            console.log(`❌ User ${username} not found`);
+            res.render('login', { error: "Invalid credentials" });
         }
     });
 });
 
 app.post('/change-credentials', requireAuth, (req, res) => {
     const { newUsername, newPassword } = req.body;
+    
+    if (!newUsername || !newPassword) {
+        return res.send('❌ Username and password are required! <a href="/change-credentials">Back</a>');
+    }
+    
     bcrypt.hash(newPassword, 10, (err, hash) => {
         db.run("UPDATE users SET username=?, password=? WHERE id=?", 
             [newUsername, hash, req.session.user_id], 
-            () => res.send('✅ Credentials updated! <a href="/">Login</a>')
+            () => {
+                console.log(`✅ Credentials updated for user ${req.session.user_id}`);
+                res.send('✅ Credentials updated! <a href="/">Login</a>');
+            }
         );
     });
 });
 
 app.post('/reset-password', (req, res) => {
     const { username, newPassword } = req.body;
+    
+    if (!username || !newPassword) {
+        return res.send('❌ Username and password are required! <a href="/reset-password">Back</a>');
+    }
+    
     bcrypt.hash(newPassword, 10, (err, hash) => {
         db.run("UPDATE users SET password=? WHERE username=?", [hash, username], function() {
             if (this.changes > 0) {
+                console.log(`✅ Password reset for user ${username}`);
                 res.send('✅ Password reset! <a href="/">Login</a>');
             } else {
-                res.send('❌ Username not found.');
+                console.log(`❌ User ${username} not found for reset`);
+                res.send('❌ Username not found. <a href="/reset-password">Back</a>');
             }
         });
     });
 });
 
 app.get('/dashboard', requireAuth, (req, res) => {
-    db.all("SELECT id, category, subcategory, note, date, time, amount, color FROM expenses WHERE user_id=?", 
+    db.all("SELECT id, category, subcategory, note, date, time, amount, color FROM expenses WHERE user_id=? ORDER BY date DESC", 
         [req.session.user_id], (err, rows) => {
+        
+        if (err) {
+            console.error('Dashboard error:', err);
+            return res.send('❌ Database error');
+        }
+        
         if (!rows) rows = [];
         
-        const totalExpenses = rows.reduce((sum, e) => sum + e.amount, 0);
-        const recentExpenses = rows.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+        const totalExpenses = rows.reduce((sum, e) => sum + (e.amount || 0), 0);
+        const recentExpenses = rows.slice(0, 5);
         
         const chartData = {};
         rows.forEach(e => {
@@ -138,18 +166,18 @@ app.get('/dashboard', requireAuth, (req, res) => {
                     time: e.time || ''
                 };
             }
-            chartData[key].total += e.amount;
+            chartData[key].total += e.amount || 0;
         });
         
         // Convert to array
-        const chartDataArray = [];
+        const data = [];
         for (let key in chartData) {
-            chartDataArray.push(chartData[key]);
+            data.push(chartData[key]);
         }
         
         res.render('dashboard', { 
-             chartDataArray, 
-            totalExpenses, 
+             data, 
+            totalExpenses: totalExpenses.toFixed(2), 
             recentExpenses, 
             username: req.session.username 
         });
