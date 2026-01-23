@@ -1,24 +1,28 @@
-# Build stage
-FROM node:20-alpine AS builder
+# Multi-stage production build
+FROM node:20-alpine AS deps
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
+COPY package.json package-lock.json ./
+RUN npm ci --only=production --no-optional && npm cache clean --force
 
-# Production stage
-FROM node:20-alpine AS production
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Copy built node_modules
-COPY --from=builder /app/node_modules ./node_modules
+ENV NODE_ENV=production
+ENV PORT=8067
+
+# Copy built dependencies
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S spentuser -u 1001
-USER spentuser
+# Create data dir with correct permissions
+RUN mkdir -p /app/data && \
+    chown -R 1000:1000 /app/data && \
+    chmod 755 /app/data
+
+USER node
 
 EXPOSE 8067
-HEALTHCHECK --interval=30s --timeout=3s \
-  CMD curl -f http://localhost:8067 || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
+  CMD node healthcheck.js || exit 1
 
-CMD ["npm", "start"]
+CMD ["node", "app.js"]
