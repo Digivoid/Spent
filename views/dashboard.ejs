@@ -1,191 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dashboard - Spent Tracker</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-  .category-color { width: 15px; height: 15px; display: inline-block; margin-right: 8px; border-radius: 3px; }
-  .expense-item { cursor: pointer; transition: all 0.2s; }
-  .expense-item:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spent Tracker - Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-light">
-<div class="container-fluid mt-4 px-4">
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="fw-bold">💰 Spent Tracker</h1>
-    <div>
-      <a href="/expenses/add" class="btn btn-primary btn-lg me-2">➕ New Expense</a>
-      <a href="/report" class="btn btn-outline-info me-2">📊 Reports</a>
-      <a href="/" class="btn btn-outline-secondary">🚪 Logout</a>
-    </div>
-  </div>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="app-title">Spent</h1>
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
 
-  <!-- Welcome & Total -->
-  <div class="row mb-4">
-    <div class="col-md-8">
-      <h3>👋 Welcome back, <%= username %>!</h3>
-    </div>
-    <div class="col-md-4 text-end">
-      <h2 class="text-primary">€<%= totalExpenses %></h2>
-      <small class="text-muted">Total spent this period</small>
-    </div>
-  </div>
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-item active">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/all-expenses" class="nav-item">
+                    <span class="nav-icon">💰</span>
+                    <span>All Expenses</span>
+                </a>
+                <a href="/expenses/add" class="nav-item">
+                    <span class="nav-icon">➕</span>
+                    <span>Add Expense</span>
+                </a>
+                <a href="/report" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span>Reports</span>
+                </a>
+            </div>
 
-  <div class="row g-4">
-    <!-- Recent Expenses -->
-    <div class="col-lg-4">
-      <div class="card h-100 shadow-sm">
-        <div class="card-header bg-light">
-          <h5 class="mb-0">📋 Recent Expenses</h5>
-        </div>
-        <div class="card-body p-0">
-          <ul class="list-group list-group-flush">
-            <% recentExpenses.forEach(e => { %>
-              <li class="list-group-item px-3 py-2 expense-item">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <span class="category-color" style="background-color:<%= e.color || '#007bff' %>"></span>
-                    <%= e.category %> <%= e.subcategory ? `(${e.subcategory})` : '' %>
-                    <small class="d-block text-muted"><%= e.note || '' %></small>
-                  </div>
-                  <div class="text-end">
-                    <strong>€<%= e.amount.toFixed(2) %></strong>
-                    <br><small><%= e.date %> <%= e.time || '' %></small>
-                  </div>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"><%= username.charAt(0).toUpperCase() %></div>
+                    <span class="user-name"><%= username %></span>
                 </div>
-              </li>
-            <% }) %>
-            <% if(recentExpenses.length === 0){ %>
-              <li class="list-group-item text-center text-muted p-4">No expenses yet</li>
-            <% } %>
-          </ul>
-        </div>
-      </div>
+                <a href="/logout" class="logout-btn">Logout</a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="page-header">
+                <div class="header-content">
+                    <h2>Dashboard</h2>
+                    <p class="header-subtitle">Your spending overview</p>
+                </div>
+            </header>
+
+            <!-- Stats Cards -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Spent</div>
+                    <div class="stat-value">€<%= totalExpenses %></div>
+                    <div class="stat-change positive">All time</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Recent Expenses</div>
+                    <div class="stat-value"><%= recentExpenses.length %></div>
+                    <div class="stat-change">Last 5 entries</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Categories</div>
+                    <div class="stat-value"><%= data.length %></div>
+                    <div class="stat-change">Active</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Avg. Expense</div>
+                    <div class="stat-value">€<%= (totalExpenses / (recentExpenses.length || 1)).toFixed(2) %></div>
+                    <div class="stat-change">Per entry</div>
+                </div>
+            </section>
+
+            <!-- Charts & Recent -->
+            <section class="dashboard-grid">
+                <!-- Pie Chart -->
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h3>Spending by Category</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="spendingChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Expenses -->
+                <div class="card recent-card">
+                    <div class="card-header">
+                        <h3>Recent Expenses</h3>
+                        <a href="/all-expenses" class="view-all-link">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <% if (recentExpenses.length > 0) { %>
+                            <div class="expense-list">
+                                <% recentExpenses.forEach(exp => { %>
+                                    <div class="expense-item">
+                                        <div class="expense-left">
+                                            <div class="expense-category" style="background-color: <%= exp.color %>"></div>
+                                            <div class="expense-details">
+                                                <div class="expense-name"><%= exp.category %></div>
+                                                <div class="expense-date"><%= new Date(exp.date).toLocaleDateString('de-DE') %></div>
+                                            </div>
+                                        </div>
+                                        <div class="expense-amount">€<%= exp.amount.toFixed(2) %></div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } else { %>
+                            <div class="empty-state">
+                                <p>No expenses yet</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
 
-    <!-- Charts -->
-    <div class="col-lg-8">
-      <div class="card shadow-sm">
-        <div class="card-header bg-light">
-          <h5 class="mb-0">📈 Spending by Category</h5>
-        </div>
-        <div class="card-body">
-          <canvas id="categoryChart" height="200"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
+    <script src="/js/theme.js"></script>
+    <script src="/js/charts.js"></script>
+    <script>
+        // Chart data
+        const chartData = {
+            labels: [<%= data.map(d => `"${d.category}${d.subcategory ? ' - ' + d.subcategory : ''}"`).join(',') %>],
+            datasets: [{
+                 [<%= data.map(d => d.total).join(',') %>],
+                backgroundColor: [<%= data.map(d => `"${d.color}"`).join(',') %>],
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                borderWidth: 2
+            }]
+        };
 
-  <!-- Category Management -->
-  <div class="card shadow-sm mt-4">
-    <div class="card-header bg-success text-white">
-      <h5 class="mb-0">🏷️ Manage Categories</h5>
-    </div>
-    <div class="card-body">
-      <div class="row g-3">
-        <div class="col-md-5">
-          <input type="text" id="newCategory" class="form-control" placeholder="New Category (Food, Transport, etc.)">
-        </div>
-        <div class="col-md-3">
-          <input type="color" id="categoryColor" value="#007bff" class="form-control form-control-color">
-        </div>
-        <div class="col-md-2">
-          <button id="addCategory" class="btn btn-success w-100">➕ Add</button>
-        </div>
-        <div class="col-md-2">
-          <button id="refreshDashboard" class="btn btn-outline-secondary w-100">🔄 Refresh</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- All Expenses Table -->
-  <div class="card shadow-sm mt-4">
-    <div class="card-header bg-light">
-      <h5 class="mb-0">📋 All Expenses</h5>
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead class="table-dark">
-            <tr>
-              <th>Amount</th>
-              <th>Category</th>
-              <th>Note</th>
-              <th>Date & Time</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% data.forEach(d => { %>
-              <tr>
-                <td><strong>€<%= d.total.toFixed(2) %></strong></td>
-                <td>
-                  <span class="category-color" style="background-color:<%= d.color %>"></span>
-                  <%= d.category %> <%= d.subcategory ? `<small>(${d.subcategory})</small>` : '' %>
-                </td>
-                <td><%= d.note || '-' %></td>
-                <td><%= d.date || '-' %></td>
-                <td>
-                  <a href="/expenses/edit/<%= d.id %>" class="btn btn-sm btn-outline-success">✏️ Edit</a>
-                  <a href="/expenses/delete/<%= d.id %>" class="btn btn-sm btn-outline-danger" 
-                     onclick="return confirm('Delete this expense?')">🗑️ Delete</a>
-                </td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-const ctx = document.getElementById('categoryChart').getContext('2d');
-new Chart(ctx, {
-    type: 'doughnut',
-     {
-        labels: [<%- data.map(d => `'${d.category}${d.subcategory ? ' - ' + d.subcategory : ''}'`).join(',') %>],
-        datasets: [{
-             [<%- data.map(d => d.total).join(',') %>],
-            backgroundColor: [<%- data.map(d => `'${d.color}'`).join(',') %>],
-            borderWidth: 2,
-            borderColor: '#fff'
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { position: 'bottom' }
-        }
-    }
-});
-
-// Category management
-document.getElementById('addCategory').addEventListener('click', async () => {
-    const category = document.getElementById('newCategory').value;
-    const color = document.getElementById('categoryColor').value;
-    
-    if (category.trim()) {
-        const response = await fetch('/expenses/add-category', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ category, color })
-        });
-        if (response.ok) {
-            alert('✅ Category added!');
-            location.reload();
-        }
-    }
-});
-
-document.getElementById('refreshDashboard').addEventListener('click', () => location.reload());
-</script>
+        initChart('spendingChart', chartData);
+    </script>
 </body>
 </html>
