@@ -194,6 +194,51 @@ app.get('/dashboard', requireAuth, (req, res) => {
     });
 });
 
+// Graph/Analytics page
+app.get('/graph', requireAuth, (req, res) => {
+    db.all("SELECT id, category, subcategory, note, date, time, amount, color FROM expenses WHERE user_id=? ORDER BY date DESC", 
+        [req.session.user_id], (err, rows) => {
+        
+        if (err) {
+            console.error('Graph error:', err);
+            return res.send('Database error');
+        }
+        
+        if (!rows) rows = [];
+        
+        const total = rows.reduce((sum, e) => sum + (e.amount || 0), 0);
+        
+        const chartData = {};
+        rows.forEach(e => {
+            const key = e.category + (e.subcategory ? ' - ' + e.subcategory : '');
+            if (!chartData[key]) {
+                chartData[key] = { 
+                    id: e.id,
+                    total: 0, 
+                    color: e.color || '#00A9FF', 
+                    category: e.category, 
+                    subcategory: e.subcategory || ''
+                };
+            }
+            chartData[key].total += e.amount || 0;
+        });
+        
+        const data = [];
+        for (let key in chartData) {
+            data.push(chartData[key]);
+        }
+        
+        // Sort by total descending
+        data.sort((a, b) => b.total - a.total);
+        
+        res.render('graph', { 
+             data,
+            total: total,
+            username: req.session.username 
+        });
+    });
+});
+
 // All Expenses
 app.get('/all-expenses', requireAuth, (req, res) => {
     db.all("SELECT id, category, subcategory, note, date, time, amount, color FROM expenses WHERE user_id=? ORDER BY date DESC", 
