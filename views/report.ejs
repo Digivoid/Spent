@@ -30,10 +30,6 @@
                     <span class="nav-icon">➕</span>
                     <span>Add Expense</span>
                 </a>
-                <a href="/report" class="nav-item active">
-                    <span class="nav-icon">📈</span>
-                    <span>Reports</span>
-                </a>
             </div>
 
             <div class="sidebar-footer">
@@ -41,6 +37,7 @@
                     <div class="user-avatar"><%= username.charAt(0).toUpperCase() %></div>
                     <span class="user-name"><%= username %></span>
                 </div>
+                <a href="/settings" class="btn" style="width: 100%; margin-top: var(--space-md); background-color: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary); text-align: center; padding: var(--space-md);">Settings</a>
                 <a href="/logout" class="logout-btn">Logout</a>
             </div>
         </nav>
