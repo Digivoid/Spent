@@ -11,3 +11,7 @@ services:
     volumes:
       - spent_db:/app/data
     restart: unless-stopped
+
+volumes:
+  spent_db:
+    driver: local
