@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spending Analysis - Spent Tracker</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="app-title">Spent</h1>
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
+
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/all-expenses" class="nav-item">
+                    <span class="nav-icon">💰</span>
+                    <span>All Expenses</span>
+                </a>
+                <a href="/expenses/add" class="nav-item">
+                    <span class="nav-icon">➕</span>
+                    <span>Add Expense</span>
+                </a>
+                <a href="/graph" class="nav-item active">
+                    <span class="nav-icon">📈</span>
+                    <span>Analytics</span>
+                </a>
+                <a href="/report" class="nav-item">
+                    <span class="nav-icon">📄</span>
+                    <span>Reports</span>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"><%= username.charAt(0).toUpperCase() %></div>
+                    <span class="user-name"><%= username %></span>
+                </div>
+                <a href="/logout" class="logout-btn">Logout</a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="page-header">
+                <div class="header-content">
+                    <h2>Spending Analysis</h2>
+                    <p class="header-subtitle">Visual breakdown of your expenses</p>
+                </div>
+            </header>
+
+            <!-- Chart Section -->
+            <section style="padding: var(--space-2xl);">
+                <div class="card chart-card" style="max-width: 800px; margin: 0 auto;">
+                    <div class="card-header">
+                        <h3>Spending by Category</h3>
+                        <span style="color: var(--text-secondary); font-size: 14px;">Total: €<%= total.toFixed(2) %></span>
+                    </div>
+                    <div class="card-body" style="padding: var(--space-2xl);">
+                        <% if (data && data.length > 0) { %>
+                            <canvas id="categoryChart" style="max-height: 400px;"></canvas>
+                        <% } else { %>
+                            <div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
+                                <div style="font-size: 64px; margin-bottom: 24px; opacity: 0.3;">📊</div>
+                                <p style="font-size: 20px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;">No data to visualize</p>
+                                <p style="font-size: 15px; margin-bottom: 24px;">Add some expenses to see your spending breakdown</p>
+                                <a href="/expenses/add" class="btn btn-primary" style="max-width: 200px; margin: 0 auto;">Add First Expense</a>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown List -->
+                <% if (data && data.length > 0) { %>
+                <div class="card" style="max-width: 800px; margin: var(--space-2xl) auto 0;">
+                    <div class="card-header">
+                        <h3>Category Breakdown</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+                            <% data.forEach(item => { %>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-md); background-color: var(--bg-primary); border-radius: var(--radius-md);">
+                                    <div style="display: flex; align-items: center; gap: var(--space-md);">
+                                        <div style="width: 16px; height: 16px; border-radius: 50%; background-color: <%= item.color %>;"></div>
+                                        <span style="font-weight: 500; color: var(--text-primary);"><%= item.category %><% if(item.subcategory) { %> - <%= item.subcategory %><% } %></span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: var(--space-lg);">
+                                        <span style="color: var(--text-secondary); font-size: 14px;"><%= ((item.total / total) * 100).toFixed(1) %>%</span>
+                                        <span style="color: var(--accent); font-weight: 600; font-size: 18px;">€<%= item.total.toFixed(2) %></span>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/theme.js"></script>
+    <script src="/js/charts.js"></script>
+    <script>
+        <% if (data && data.length > 0) { %>
+            const chartData = {
+                labels: <%= JSON.stringify(data.map(d => d.category + (d.subcategory ? ' - ' + d.subcategory : ''))) %>,
+                datasets: [{
+                     <%= JSON.stringify(data.map(d => d.total)) %>,
+                    backgroundColor: <%= JSON.stringify(data.map(d => d.color)) %>,
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 2
+                }]
+            };
+
+            initChart('categoryChart', chartData);
+        <% } %>
+    </script>
+</body>
+</html>
