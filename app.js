@@ -162,6 +162,35 @@ app.get('/dashboard', requireAuth, (req, res) => {
         const totalExpenses = rows.reduce((sum, e) => sum + (e.amount || 0), 0);
         const recentExpenses = rows.slice(0, 5);
         
+        // This month spending
+        const now = new Date();
+        const thisMonthExpenses = rows.filter(e => {
+            const expDate = new Date(e.date);
+            return expDate.getMonth() === now.getMonth() && expDate.getFullYear() === now.getFullYear();
+        });
+        const thisMonthTotal = thisMonthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+        
+        // Biggest expense
+        const biggestExpense = rows.length > 0 ? Math.max(...rows.map(e => e.amount || 0)) : 0;
+        
+        // Top category
+        const categoryTotals = {};
+        rows.forEach(e => {
+            if (!categoryTotals[e.category]) {
+                categoryTotals[e.category] = 0;
+            }
+            categoryTotals[e.category] += e.amount || 0;
+        });
+        
+        let topCategory = 'None';
+        let maxAmount = 0;
+        for (let cat in categoryTotals) {
+            if (categoryTotals[cat] > maxAmount) {
+                maxAmount = categoryTotals[cat];
+                topCategory = cat;
+            }
+        }
+        
         const chartData = {};
         rows.forEach(e => {
             const key = e.category + (e.subcategory ? ' - ' + e.subcategory : '');
@@ -187,7 +216,10 @@ app.get('/dashboard', requireAuth, (req, res) => {
         
         res.render('dashboard', { 
              data, 
-            totalExpenses: parseFloat(totalExpenses || 0).toFixed(2), 
+            totalExpenses: parseFloat(totalExpenses || 0).toFixed(2),
+            thisMonthTotal: parseFloat(thisMonthTotal || 0).toFixed(2),
+            biggestExpense: parseFloat(biggestExpense || 0).toFixed(2),
+            topCategory: topCategory,
             recentExpenses, 
             username: req.session.username 
         });
