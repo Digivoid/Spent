@@ -1,3 +1,9 @@
-expenses.db
-__pycache__/
-static/charts/*.png.DS_Store
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+data/
+*.log
+.DS_Store
