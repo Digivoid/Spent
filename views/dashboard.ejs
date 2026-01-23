@@ -131,18 +131,27 @@
     <script src="/js/theme.js"></script>
     <script src="/js/charts.js"></script>
     <script>
-        // Chart data
-        const chartData = {
-            labels: [<%= data.map(d => `"${d.category}${d.subcategory ? ' - ' + d.subcategory : ''}"`).join(',') %>],
-            datasets: [{
-                 [<%= data.map(d => d.total).join(',') %>],
-                backgroundColor: [<%= data.map(d => `"${d.color}"`).join(',') %>],
-                borderColor: 'rgba(255, 255, 255, 0.1)',
-                borderWidth: 2
-            }]
-        };
+        // Chart data with empty state handling
+        <% if (data && data.length > 0) { %>
+            const chartData = {
+                labels: [<%= data.map(d => `"${d.category}${d.subcategory ? ' - ' + d.subcategory : ''}"`).join(',') %>],
+                datasets: [{
+                     [<%= data.map(d => d.total).join(',') %>],
+                    backgroundColor: [<%= data.map(d => `"${d.color}"`).join(',') %>],
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 2
+                }]
+            };
 
-        initChart('spendingChart', chartData);
+            initChart('spendingChart', chartData);
+        <% } else { %>
+            // No data - show message
+            const chartCanvas = document.getElementById('spendingChart');
+            if (chartCanvas) {
+                const parent = chartCanvas.parentElement;
+                parent.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><p style="font-size: 16px;">No expenses yet</p><p style="margin-top: 8px; font-size: 14px;">Add your first expense to see the chart</p></div>';
+            }
+        <% } %>
     </script>
 </body>
 </html>
