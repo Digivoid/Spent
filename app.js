@@ -271,6 +271,102 @@ app.get('/graph', requireAuth, (req, res) => {
     });
 });
 
+// Settings page
+app.get('/settings', requireAuth, (req, res) => {
+    db.all("SELECT DISTINCT category AS name FROM expenses WHERE user_id=? ORDER BY category", 
+        [req.session.user_id], (err, categories) => {
+        
+        res.render('settings', { 
+            username: req.session.username,
+            categories: categories || []
+        });
+    });
+});
+
+// Change username
+app.post('/settings/change-username', requireAuth, (req, res) => {
+    const { newUsername } = req.body;
+    
+    if (!newUsername || newUsername.length < 3) {
+        return res.send('Username must be at least 3 characters. <a href="/settings">Back</a>');
+    }
+    
+    db.run("UPDATE users SET username=? WHERE id=?", [newUsername, req.session.user_id], (err) => {
+        if (err) {
+            return res.send('Error updating username. <a href="/settings">Back</a>');
+        }
+        req.session.username = newUsername;
+        res.redirect('/settings');
+    });
+});
+
+// Change password
+app.post('/settings/change-password', requireAuth, async (req, res) => {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        return res.send('All fields required. <a href="/settings">Back</a>');
+    }
+    
+    if (newPassword !== confirmPassword) {
+        return res.send('Passwords do not match. <a href="/settings">Back</a>');
+    }
+    
+    if (newPassword.length < 6) {
+        return res.send('Password must be at least 6 characters. <a href="/settings">Back</a>');
+    }
+    
+    db.get("SELECT password FROM users WHERE id=?", [req.session.user_id], async (err, row) => {
+        if (err || !row) {
+            return res.send('Error. <a href="/settings">Back</a>');
+        }
+        
+        const match = await bcrypt.compare(currentPassword, row.password);
+        if (!match) {
+            return res.send('Current password incorrect. <a href="/settings">Back</a>');
+        }
+        
+        const hash = await bcrypt.hash(newPassword, 10);
+        db.run("UPDATE users SET password=? WHERE id=?", [hash, req.session.user_id], (err) => {
+            if (err) {
+                return res.send('Error updating password. <a href="/settings">Back</a>');
+            }
+            res.send('Password updated successfully! <a href="/settings">Back to Settings</a>');
+        });
+    });
+});
+
+// Set recovery ID
+app.post('/settings/set-recovery', requireAuth, (req, res) => {
+    const { recoveryId } = req.body;
+    
+    db.run("UPDATE users SET recovery_id=? WHERE id=?", [recoveryId, req.session.user_id], (err) => {
+        if (err) {
+            return res.send('Error setting recovery ID. <a href="/settings">Back</a>');
+        }
+        res.redirect('/settings');
+    });
+});
+
+// Delete category
+app.post('/settings/delete-category', requireAuth, (req, res) => {
+    const { categoryName } = req.body;
+    
+    // Note: This doesn't delete expenses, just removes the category from the list
+    // Categories are derived from expenses, so this is informational only
+    res.send('Categories cannot be deleted independently. Delete all expenses in this category instead. <a href="/settings">Back</a>');
+});
+
+// Delete all data
+app.post('/settings/delete-all-data', requireAuth, (req, res) => {
+    db.run("DELETE FROM expenses WHERE user_id=?", [req.session.user_id], (err) => {
+        if (err) {
+            return res.json({ success: false });
+        }
+        res.json({ success: true });
+    });
+});
+
 // All Expenses
 app.get('/all-expenses', requireAuth, (req, res) => {
     db.all("SELECT id, category, subcategory, note, date, time, amount, color FROM expenses WHERE user_id=? ORDER BY date DESC", 
