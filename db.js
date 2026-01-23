@@ -1,27 +1,42 @@
 const sqlite3 = require('sqlite3').verbose();
-const fs = require('fs');
-
-if (!fs.existsSync('./data')) fs.mkdirSync('./data');
-
 const db = new sqlite3.Database('./data/expenses.db');
 
 db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS users(
-      id INTEGER PRIMARY KEY,
-      username TEXT UNIQUE,
-      password TEXT
-  )`);
+    // Users table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL
+        )
+    `);
 
-  db.run(`CREATE TABLE IF NOT EXISTS expenses(
-      id INTEGER PRIMARY KEY,
-      user_id INTEGER,
-      amount REAL,
-      category TEXT,
-      subcategory TEXT,
-      note TEXT,
-      date TEXT,
-      color TEXT
-  )`);
+    // Expenses table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS expenses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            category TEXT NOT NULL,
+            subcategory TEXT,
+            note TEXT,
+            date TEXT NOT NULL,
+            time TEXT,
+            amount REAL NOT NULL,
+            color TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    `);
+
+    // Categories table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            UNIQUE(user_id, name),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    `);
 });
 
 module.exports = db;
