@@ -33,6 +33,72 @@ router.post('/add', (req, res) => {
     );
 });
 
+// GET edit expense page
+router.get('/edit/:id', (req, res) => {
+    const { id } = req.params;
+    
+    db.get("SELECT * FROM expenses WHERE id=? AND user_id=?", [id, req.session.user_id], (err, expense) => {
+        if (!expense) {
+            return res.send('❌ Expense not found! <a href="/dashboard">Back</a>');
+        }
+        
+        db.all("SELECT DISTINCT name FROM categories WHERE user_id=? ORDER BY name", 
+            [req.session.user_id], (err, categories) => {
+            res.render('edit-expense', { expense, categories, username: req.session.username });
+        });
+    });
+});
+
+// POST edit expense
+router.post('/edit/:id', (req, res) => {
+    const { id } = req.params;
+    const { category, subcategory, note, date, time, amount, color } = req.body;
+    
+    if (!category || !amount || !date) {
+        return res.send('❌ Category, amount, and date are required! <a href="/expenses/edit/' + id + '">Back</a>');
+    }
+    
+    db.run(
+        "UPDATE expenses SET category=?, subcategory=?, note=?, date=?, time=?, amount=?, color=? WHERE id=? AND user_id=?",
+        [category, subcategory || '', note || '', date, time || '', parseFloat(amount), color || '#007bff', id, req.session.user_id],
+        (err) => {
+            if (err) {
+                console.error('Error updating expense:', err);
+                return res.send('❌ Error updating expense! <a href="/expenses/edit/' + id + '">Back</a>');
+            }
+            console.log(`✅ Expense ${id} updated`);
+            res.redirect('/dashboard');
+        }
+    );
+});
+
+// GET delete confirmation page
+router.get('/delete/:id', (req, res) => {
+    const { id } = req.params;
+    
+    db.get("SELECT * FROM expenses WHERE id=? AND user_id=?", [id, req.session.user_id], (err, expense) => {
+        if (!expense) {
+            return res.send('❌ Expense not found! <a href="/dashboard">Back</a>');
+        }
+        
+        res.render('delete-expense', { expense, username: req.session.username });
+    });
+});
+
+// POST delete expense
+router.post('/delete/:id', (req, res) => {
+    const { id } = req.params;
+    
+    db.run("DELETE FROM expenses WHERE id=? AND user_id=?", [id, req.session.user_id], function() {
+        if (this.changes > 0) {
+            console.log(`✅ Expense ${id} deleted`);
+            res.redirect('/dashboard');
+        } else {
+            res.send('❌ Expense not found! <a href="/dashboard">Back</a>');
+        }
+    });
+});
+
 // GET add category
 router.get('/add-category', (req, res) => {
     res.render('add-category', { username: req.session.username });
@@ -60,7 +126,29 @@ router.post('/add-category', (req, res) => {
     );
 });
 
-// DELETE expense
+// GET manage categories
+router.get('/categories', (req, res) => {
+    db.all("SELECT * FROM categories WHERE user_id=? ORDER BY name", 
+        [req.session.user_id], (err, categories) => {
+        res.render('manage-categories', { categories: categories || [], username: req.session.username });
+    });
+});
+
+// DELETE category
+router.delete('/categories/:id', (req, res) => {
+    const { id } = req.params;
+    
+    db.run("DELETE FROM categories WHERE id=? AND user_id=?", [id, req.session.user_id], function() {
+        if (this.changes > 0) {
+            console.log(`✅ Category ${id} deleted`);
+            res.json({ success: true });
+        } else {
+            res.status(403).json({ success: false, error: 'Unauthorized' });
+        }
+    });
+});
+
+// DELETE expense (API)
 router.delete('/:id', (req, res) => {
     const { id } = req.params;
     
