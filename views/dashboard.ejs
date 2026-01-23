@@ -131,21 +131,33 @@
     <script src="/js/theme.js"></script>
     <script src="/js/charts.js"></script>
     <script>
-        // Chart data with empty state handling
+        console.log('Dashboard script loading');
+        
+        // Chart data with debugging
         <% if (data && data.length > 0) { %>
+            console.log('Has data, creating chart');
+            
             const chartData = {
-                labels: [<%= data.map(d => `"${d.category}${d.subcategory ? ' - ' + d.subcategory : ''}"`).join(',') %>],
+                labels: <%= JSON.stringify(data.map(d => d.category + (d.subcategory ? ' - ' + d.subcategory : ''))) %>,
                 datasets: [{
-                     [<%= data.map(d => d.total).join(',') %>],
-                    backgroundColor: [<%= data.map(d => `"${d.color}"`).join(',') %>],
+                     <%= JSON.stringify(data.map(d => d.total)) %>,
+                    backgroundColor: <%= JSON.stringify(data.map(d => d.color)) %>,
                     borderColor: 'rgba(255, 255, 255, 0.1)',
                     borderWidth: 2
                 }]
             };
 
-            initChart('spendingChart', chartData);
+            console.log('Chart ', chartData);
+            
+            // Wait for DOM and Chart.js to be ready
+            if (typeof Chart !== 'undefined' && typeof initChart === 'function') {
+                initChart('spendingChart', chartData);
+                console.log('Chart initialized');
+            } else {
+                console.error('Chart.js or initChart function not found');
+            }
         <% } else { %>
-            // No data - show message
+            console.log('No data - showing empty state');
             const chartCanvas = document.getElementById('spendingChart');
             if (chartCanvas) {
                 const parent = chartCanvas.parentElement;
